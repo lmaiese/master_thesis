@@ -1,5 +1,5 @@
 #!/bin/bash
-./configure.sh /home/usuaris/lmaiese/cuda/cuda-11.4
+./configure.sh /home/usuaris/lmaiese/cuda/local/cuda-11.4
 make GPU_SM_ARCH=sm_35 MAX_SEQ_LEN=300 N_CODE=4 N_PENALTY=1
 cd test_prog
 make $1 
