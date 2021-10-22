@@ -1,204 +1,111 @@
-CXX=g++
-CC=gcc
-VPATH=src:obj:lib
+GPU_SM_ARCH=
+MAX_SEQ_LEN=
+N_CODE=
+N_PENALTY=
+
+GPU_COMPUTE_ARCH=$(subst sm,compute,$(GPU_SM_ARCH))
+NVCC=/home/usuaris/lmaiese/cuda-11.0//bin/nvcc
+CC=g++
+SRC_DIR=./src/
 OBJ_DIR=./obj/
 LIB_DIR=./lib/
-CUDA_LIB_DIR=/opt/area/shared/programs/x86_64/cuda/11.0.3_450.51.06/lib64
-GASAL_LIB_DIR = ./GASAL2/lib/
-GASAL_INCLUDE_DIR = ./GASAL2/include/
-BOOST_INCLUDE_DIR = ../boost_1_75_0
+INCLUDE_DIR=./include/
 
-#SHD_DIR=./src/shd_filter/
-#CC=clang --analyze
-CFLAGS=-g -fopenmp -Wall -Wno-unused-function -O2 -msse4.2 -std=c++11 -fpermissive
-NVCCFLAGS = -g -lineinfo --gpu-architecture=compute_35 --gpu-code=sm_35 -O3 -Xcompiler -Wall -Xptxas -Werror --default-stream per-thread 
-WRAP_MALLOC=-DUSE_MALLOC_WRAPPERS
-AR=ar
-DFLAGS=-DHAVE_PTHREAD $(WRAP_MALLOC)
+## START NEW CODE
 
-LOBJS=utils.o kthread.o kstring.o ksw.o bwt.o bntseq.o bwa.o bwamem.o bwamem_pair.o bwamem_extra.o malloc_wrap.o \
-			QSufSort.o bwt_gen.o rope.o rle.o is.o bwtindex.o 
+LIBSTATGEN=./libStatGen/include
+
+OBJ_LSG_BAM_PATH=./libStatGen/bam/obj/
+OBJ_LSG_GENERAL_PATH=./libStatGen/general/obj/
+OBJ_LSG_VCF_PATH=./libStatGen/vcf/obj/
+OBJ_LSG_FASTQ_PATH=./libStatGen/fastq/obj/
+OBJ_LSG_GLF_PATH=./libStatGen/glf/obj/
+OBJ_LSG_SAMTOOLS_PATH=./libStatGen/samtools/obj/
+
+BAM_OBJS = $(wildcard $(OBJ_LSG_BAM_PATH)*.o)
+GENERAL_OBJS = $(wildcard $(OBJ_LSG_GENERAL_PATH)*.o)
+VCF_OBJS = $(wildcard $(OBJ_LSG_VCF_PATH)*.o)
+FASTQ_OBJS = $(wildcard $(OBJ_LSG_FASTQ_PATH)*.o)
+GLF_OBJS = $(wildcard $(OBJ_LSG_GLF_PATH)*.o)
+SAMTOOLS_OBJS = $(wildcard $(OBJ_LSG_SAMTOOLS_PATH)*.o)
+
+## END NEW CODE
+
+SOURCES=  args_parser.cpp host_batch.cpp ctors.cpp interfaces.cpp res.cpp gasal_align.cu
+LOBJS=$(patsubst %,%o,$(SOURCES))
+
 LOBJS_PATH=$(addprefix $(OBJ_DIR),$(LOBJS))
-SHD_OBJS=mask.o print.o bit_convert.o popcount.o vector_filter.o
-SHD_OBJS_PATH=$(addprefix $(OBJ_DIR),$(SHD_OBJS))
+VPATH=src:obj:lib
+YELLOW=\033[1;33m
+NC=\033[0m # No Color
 
-#GASAL_OBJS=gasal.o
-#GASAL_OBJS_PATH=$(addprefix $(OBJ_DIR),$(GASAL_OBJS))
-#SHD_SRC_PATH=$(addprefix $(SHD_DIR),$(SHD_OBJS))
-
-AOBJS=bwashm.o bwase.o bwaseqio.o bwtgap.o bwtaln.o bamlite.o \
-	bwape.o kopen.o pemerge.o maxk.o \
-	bwtsw2_core.o bwtsw2_main.o bwtsw2_aux.o bwt_lite.o \
-	bwtsw2_chain.o fastmap.o bwtsw2_pair.o
-
-AOBJS_PATH=$(addprefix $(OBJ_DIR),$(AOBJS))
-PROG=bwa-gasal2
-INCLUDES= -I $(GASAL_INCLUDE_DIR) -I $(BOOST_INCLUDE_DIR) -I ./GASAL2/libStatGen/include/
-#INCLUDES= -I $(GASAL_INCLUDE_DIR)
-LIBS=-lm -lz -lpthread -lcudart -lStatGen
-SUBDIRS=.
-
-ANALYSIS_FILENAME=125k
-VALGRIND=valgrind
-#--track-origins=yes -tool=memcheck --leak-check=yes --show-reachable=yes --num-callers=20 --track-fds=yes
-NVPROF=
-NVPROF= nvprof -s -f -o /home/usuaris/lmaiese/nvprofout/$(ANALYSIS_FILENAME).nvprof
-
-ifeq ($(shell uname -s),Linux)
-	LIBS += -lrt
+ifeq ($(GPU_SM_ARCH),)
+error1:
+	@echo "Must specify GPU architecture as sm_xx"
+endif
+ifeq ($(MAX_SEQ_LEN),)
+error2:
+	@echo "Must specify maximum sequence length"
 endif
 
-#.SUFFIXES:.c .o .cc .cpp .cu .hpp
+ifeq ($(N_CODE),)
+error3:
+	@echo "Must specify the code for 'N'"
+endif
+#ifneq ($(GPU_SM_ARCH),clean)
 
-#.c.o:
-#		$(CC) -c $(CFLAGS) $(DFLAGS) $(INCLUDES) $< -o $(OBJ_DIR)$@
 
-#.cpp.o:
-#		g++ -c $(CFLAGS) $(INCLUDES) $< -o $(OBJ_DIR)$(notdir $@)
-%.o: %.c
-	$(CXX) -c $(CFLAGS) $(DFLAGS) $(INCLUDES) $< -o $(OBJ_DIR)$@
-%.o: %.cpp
-	$(CXX) -c $(CFLAGS) $(INCLUDES) $< -o $(OBJ_DIR)$@
+
+
+## If your computer ships gcc-5.3.1 (at least for CUDA 8.0), this is the regular line. You might need to add: --compiler-options -fPIC 
+## With Debian and clang, use: $(NVCC) -ccbin clang-3.8 --compiler-options -fpie
+
+ifeq ($(N_PENALTY),)
+%.cuo: %.cu
+	$(NVCC) -c -g -O3 -std=c++14 -I $(LIBSTATGEN) -L ./libStatGen -lstatgen -Xcompiler -fopenmp,-Wall,-DMAX_SEQ_LEN=$(MAX_SEQ_LEN),-DN_CODE=$(N_CODE) -Xptxas -Werror  --gpu-architecture=$(GPU_COMPUTE_ARCH) --gpu-code=$(GPU_SM_ARCH) -lineinfo --ptxas-options=-v --default-stream per-thread $< -o $(OBJ_DIR)$@
 	
-#.cu.o:
-#		 nvcc -c $(NVCCFLAGS) $(INCLUDES) $< -o $(OBJ_DIR)$(notdir $@)
-
-%.o : %.cu
-	nvcc -c $(NVCCFLAGS) $(INCLUDES) $< -o $(OBJ_DIR)$(notdir $@)
-
-short-index: all 
-		./$(PROG) index /u/biolab/cerchiag/fast/dna-reference.fasta
-
-short: all
-		$(VALGRIND) ./$(PROG) gase_aln -g -t 12 -l 150 -v 4 /data/work/jlevy/hg19_short/chr1p1.fasta /data/work/jlevy/srr_short4/srr150_1.fastq /data/work/jlevy/srr_short4/srr150_2.fastq > short.log 
-
-20k: all
-		./$(PROG) index /u/biolab/cerchiag/fast/dna-reference.fasta
-		./$(PROG) gase_aln -v 4 -l 150 /u/biolab/cerchiag/fast/dna-reference.fasta /u/biolab/cerchiag/fast/dna-query.fasta > res.log
-
-srr150index: all
-		./$(PROG) index /data/work/jlevy/hg19.fasta
-
-
-srr150: all
-		./$(PROG) gase_aln -g -t 1 -l 153 /data/work/jlevy/hg19.fasta /data/work/jlevy/srr/150/SRR949537_1.fastq /data/work/jlevy/srr/150/SRR949537_2.fastq > /data/work/jlevy/srr/150/res_bwa_gasal2.log
-
-srr250: all
-	./$(PROG) gase_aln -t 12 -l 250 /data/work/jlevy/hg19.fasta /data/work/jlevy/srr/250/SRR835433.fastq_1 /data/work/jlevy/srr/250/SRR835433.fastq_2 > /data/work/jlevy/srr/250/res_bwa_gasal2.log
-
-srr150nvprof: all
-	nvprof --profile-api-trace none -s -f -o /tmp/.nvprof/$(ANALYSIS_FILENAME).nvprof ./$(PROG) gase_aln -t 12 -l 150 /data/work/jlevy/srr/150/SRR949537_1.fastq /data/work/jlevy/srr/150/SRR949537_2.fastq > /data/work/jlevy/srr/150/res_bwa_gasal2.log
-
-
-1000: all
-		./$(PROG) gase_aln -g -t 1 -l 300 /data/work/jlevy/hg19.fasta /data/work/jlevy/srr/150/1000_1.fastq /data/work/jlevy/srr/150/1000_2.fastq > /data/work/jlevy/srr/150/res_bwa-gasal2_master_1000.log
-
-
-10: all
-		./$(PROG) gase_aln -g -t 1 -l 300 -v 4 /data/work/jlevy/hg19.fasta /data/work/jlevy/srr/150/10_1.fastq /data/work/jlevy/srr/150/10_2.fastq > /data/work/jlevy/srr/150/res_bwa-gasal2_master_10.sam
-
-125k: all
-		$(NVPROF) --cpu-profiling on --profile-from-start on  --unified-memory-profiling off -o $(NVPROF_OUTPUT_DIR)/profile_$(THREAD_NUMBER)t_morebytes.nvprof ./$(PROG) protein_aln -g -t $(THREAD_NUMBER) -l $(READ_LENGTH) -v 1 $(REFERENCE) $(READ1) $(READ2) > $(OUTPUT_SAM)
-		sha256sum $(OUTPUT_SAM)
+else
+%.cuo: %.cu
+	$(NVCC) -c -g -O3 -std=c++14 -I $(LIBSTATGEN) -L ./libStatGen -lstatGen -Xcompiler -fopenmp,-Wall,-DMAX_SEQ_LEN=$(MAX_SEQ_LEN),-DN_CODE=$(N_CODE),-DN_PENALTY=$(N_PENALTY) -Xptxas -Werror  --gpu-architecture=$(GPU_COMPUTE_ARCH) --gpu-code=$(GPU_SM_ARCH) -lineinfo --ptxas-options=-v --default-stream per-thread $< -o $(OBJ_DIR)$@
+	
+endif
 
 
 
-clean-db: all
-		rm /data/work/jlevy/srr/150/*.fasta.*
-		rm /data/work/jlevy/srr/150/*.fastq.*
+## If your computer ships gcc-5.3.1 (at least for CUDA 8.0), this is the regular line. You might need to add: -fPIC 
+ifeq ($(N_PENALTY),)
+%.cppo: %.cpp
+	$(CC) -c -g -O3 -std=c++14 -Wall -DMAX_SEQ_LEN=$(MAX_SEQ_LEN) -DN_CODE=$(N_CODE) -Werror $< -o $(OBJ_DIR)$@
+	
+else
+%.cppo: %.cpp
+	$(CC) -c -g -O3 -std=c++14 -Wall -DMAX_SEQ_LEN=$(MAX_SEQ_LEN) -DN_CODE=$(N_CODE) -DN_PENALTY=$(N_PENALTY) -Werror $< -o $(OBJ_DIR)$@
+	
+endif
 
 
-all: makedir $(PROG) 
+all: clean makedir libgasal.a
 
 makedir:
 	@mkdir -p $(OBJ_DIR)
 	@mkdir -p $(LIB_DIR)
-	@echo "If you donot see anything below this line then there is nothing to \"make\""
-
-bwa-gasal2:libbwa.a libshd_filter.a  $(AOBJS) main.o
-		$(CXX) $(CFLAGS) $(DFLAGS) $(AOBJS_PATH) $(OBJ_DIR)main.o -o $@ -L$(LIB_DIR) -L$(CUDA_LIB_DIR) -L$(GASAL_LIB_DIR) -L ./GASAL2/libStatGen/ -lbwa -lshd_filter -lgasal $(LIBS)
-
-
-libbwa.a:$(LOBJS)
-		echo "ARCHIVING: libbwa.a"
-		$(AR) -csru $(LIB_DIR)$@ $(LOBJS_PATH)
-
-libshd_filter.a: $(SHD_OBJS)
-		#make -C ./src/shd_filter libshd_filter.a
-		echo "ARCHIVING: libshd_filter.a"
-		$(AR) -csru $(LIB_DIR)$@ $(SHD_OBJS_PATH)
-		
-#libgasal.a: $(GASAL_OBJS)
-		#make -C ./src/shd_filter libshd_filter.a
-		#ar -csru $(LIB_DIR)$@ $(GASAL_OBJS_PATH) 		
-
-clean:
-		rm -f -r gmon.out $(OBJ_DIR) a.out $(PROG) *~ $(LIB_DIR)
-		rm *.log
-		#make -C ./src/shd_filter/ clean
-
-#depend:
-#	( LC_ALL=C ; export LC_ALL; cd src; makedepend -Y -- $(CFLAGS) $(DFLAGS) -- -f ../Makefile -p $(OBJ_DIR)  *.c *.cpp )
-depend:
-	( LC_ALL=C ; export LC_ALL; cd src; makedepend -Y -- $(CFLAGS) $(DFLAGS) -- -f ../Makefile  *.c *.cpp )
+	@mkdir -p $(INCLUDE_DIR)
+	@cp $(SRC_DIR)/*.h $(INCLUDE_DIR)
+	@sed  -i "s/MAX_SEQ_LEN=[0-9]\{1,9\}/MAX_SEQ_LEN=$(MAX_SEQ_LEN)/" ./test_prog/Makefile
+	 
+ifeq ($(N_PENALTY),)
+libgasal.a: $(LOBJS)
+	ar -csru $(LIB_DIR)$@ $(LOBJS_PATH)
+	@echo ""
+	@echo -e "${YELLOW}WARNING:${NC}\"N\" is not defined"
+else
+libgasal.a: $(LOBJS)
+	ar -csru $(LIB_DIR)$@ $(LOBJS_PATH)
+endif
 	
+clean:
+	rm -f -r $(OBJ_DIR) $(LIB_DIR) $(INCLUDE_DIR)  *~ *.exe *.cppo *.cuo *.txt *~
 
-# DO NOT DELETE THIS LINE -- make depend depends on it.
+gasal_align.cuo: gasal.h gasal_kernels.h
 
-QSufSort.o: QSufSort.h
-bamlite.o: bamlite.h malloc_wrap.h
-bntseq.o: bntseq.h utils.h kseq.h malloc_wrap.h khash.h
-bwa.o: bntseq.h bwa.h bwt.h ksw.h utils.h kstring.h malloc_wrap.h kvec.h
-bwa.o: kseq.h
-bwamem.o: kstring.h malloc_wrap.h bwamem.h bwt.h bntseq.h bwa.h ksw.h kvec.h
-bwamem.o: ksort.h utils.h vector_filter.h kbtree.h
-bwamem_extra.o: bwa.h bntseq.h bwt.h bwamem.h kstring.h malloc_wrap.h
-bwamem_pair.o: kstring.h malloc_wrap.h bwamem.h bwt.h bntseq.h bwa.h kvec.h
-bwamem_pair.o: utils.h ksw.h
-bwape.o: bwtaln.h bwt.h kvec.h malloc_wrap.h bntseq.h utils.h bwase.h bwa.h
-bwape.o: ksw.h khash.h
-bwase.o: bwase.h bntseq.h bwt.h bwtaln.h utils.h kstring.h malloc_wrap.h
-bwase.o: bwa.h ksw.h
-bwaseqio.o: bwtaln.h bwt.h utils.h bamlite.h malloc_wrap.h kseq.h
-bwashm.o: bwa.h bntseq.h bwt.h
-bwt.o: utils.h bwt.h kvec.h malloc_wrap.h
-bwt_gen.o: QSufSort.h malloc_wrap.h
-bwt_lite.o: bwt_lite.h malloc_wrap.h
-bwtaln.o: bwtaln.h bwt.h bwtgap.h utils.h bwa.h bntseq.h malloc_wrap.h
-bwtgap.o: bwtgap.h bwt.h bwtaln.h malloc_wrap.h
-bwtindex.o: bntseq.h bwa.h bwt.h utils.h rle.h rope.h malloc_wrap.h
-bwtsw2_aux.o: bntseq.h bwt_lite.h utils.h bwtsw2.h bwt.h kstring.h
-bwtsw2_aux.o: malloc_wrap.h bwa.h ksw.h kseq.h ksort.h
-bwtsw2_chain.o: bwtsw2.h bntseq.h bwt_lite.h bwt.h malloc_wrap.h ksort.h
-bwtsw2_core.o: bwt_lite.h bwtsw2.h bntseq.h bwt.h kvec.h malloc_wrap.h
-bwtsw2_core.o: khash.h ksort.h
-bwtsw2_main.o: bwt.h bwtsw2.h bntseq.h bwt_lite.h utils.h bwa.h
-bwtsw2_pair.o: utils.h bwt.h bntseq.h bwtsw2.h bwt_lite.h kstring.h
-bwtsw2_pair.o: malloc_wrap.h ksw.h
-example.o: bwamem.h bwt.h bntseq.h bwa.h kseq.h malloc_wrap.h
-fastmap.o: bwa.h bntseq.h bwt.h bwamem.h kvec.h malloc_wrap.h utils.h kseq.h
-is.o: malloc_wrap.h
-kopen.o: malloc_wrap.h
-kstring.o: kstring.h malloc_wrap.h
-ksw.o: ksw.h malloc_wrap.h
-main.o: kstring.h malloc_wrap.h utils.h
-malloc_wrap.o: malloc_wrap.h
-maxk.o: bwa.h bntseq.h bwt.h bwamem.h kseq.h malloc_wrap.h
-pemerge.o: ksw.h kseq.h malloc_wrap.h kstring.h bwa.h bntseq.h bwt.h utils.h
-rle.o: rle.h
-rope.o: rle.h rope.h
-utils.o: utils.h ksort.h malloc_wrap.h kseq.h
-bit_convert.o: print.h bit_convert.h
-bit_convertMain.o: bit_convert.h
-countPassFilter.o: vector_filter.h mask.h
-mask.o: mask.h
-popcount.o: popcount.h mask.h
-popcountMain.o: popcount.h
-print.o: print.h
-read_modifier.o: read_modifier.h
-shiftMain.o: vector_filter.h mask.h
-string_cp.o: print.h
-test_modifier.o: read_modifier.h vector_filter.h
-vector_filter.o: print.h vector_filter.h popcount.h bit_convert.h mask.h
-vector_filterMain.o: vector_filter.h mask.h
-#gasal.o: gasal.h gasal_kernels_inl.h
+
