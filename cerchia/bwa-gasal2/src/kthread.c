@@ -5,7 +5,7 @@
 #include <math.h>
 #include "utils.h"
 #include "../GASAL2/include/gasal.h"
-#include "/home/usuarsi/lmaiese/cuda-11.0//targets/x86_64-linux/include/cuda_runtime.h"
+#include "/home/usuaris/lmaiese/cuda-11.0//targets/x86_64-linux/include/cuda_runtime.h"
 #include <iostream>
 // J.L. 2019-01-10 09:50 adding extern C proto
 #ifdef __cplusplus
