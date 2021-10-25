@@ -855,7 +855,7 @@ void mem_shd_flt_chained_seeds(const mem_opt_t *opt, const bntseq_t *bns, const 
 				int rid;
 				int qbeg = (qe - 5) > 0 ? (qe - 5) : 0;
 				int qend = (qbeg + 128) <= l_query ? (qbeg + 128) : l_query;
-				char read_display[320] __aligned__;
+				char read_display[320] aligned16;
 				{
 					int q, f;
 					for (q = qbeg, f = 0; f < 320; q++, f++) {
@@ -865,7 +865,7 @@ void mem_shd_flt_chained_seeds(const mem_opt_t *opt, const bntseq_t *bns, const 
 							read_display[f] = '\0';
 					}
 				}
-				char read_t[320] __aligned__;
+				char read_t[320] aligned16;
 				//strcpy(read_t, "TCCTCCAAGAAGATATGTAGTTGGTAAATAAACATAAGAAAAGATGCTCAAAACAATATGTTATTAGGGAACTTCAAATTAACATGATGAGATACCATTATACACCAATTAGAATGTCTAATATCTGA");
 				int q, f;
 				for (q = qbeg, f = 0; f < 320; q++, f++) {
@@ -884,7 +884,7 @@ void mem_shd_flt_chained_seeds(const mem_opt_t *opt, const bntseq_t *bns, const 
 						rbeg = l_pac;
 				}
 				rseq = bns_fetch_seq(bns, pac, &rbeg, mid, &rend, &rid);
-				char ref_display[320] __aligned__;
+				char ref_display[320] aligned16;
 				{
 					int r, f;
 					for (r = 0, f = 0; f < 320; r++, f++) {
@@ -896,7 +896,7 @@ void mem_shd_flt_chained_seeds(const mem_opt_t *opt, const bntseq_t *bns, const 
 							ref_display[f] = '\0';
 					}
 				}
-				char ref_t[320] __aligned__;
+				char ref_t[320] aligned16;
 				//strcpy(ref_t, "TCCTCAAAGAAGATATGTAGTTGGTAAATAAACATAAGAAAAGATGCTCAAAACAATATGTTATTAGGGAACTTCAAATTAACATGATGAGATACCATTATACACCAATTAGAATGTCTAATATCTGA");
 				int r;
 				for (r = 0, f = 0; f < 320; r++, f++) {
@@ -923,7 +923,7 @@ void mem_shd_flt_chained_seeds(const mem_opt_t *opt, const bntseq_t *bns, const 
 				int rid;
 				int qend = (qb + 5) < l_query ? (qb + 5) : l_query;
 				int qbeg = (qend - 128) > 0 ? (qend - 128) : 0;
-				char read_display[320] __aligned__;
+				char read_display[320] aligned16;
 				{
 					int q, f;
 					for (q = qend - 1, f = 0; f < 320; q--, f++) {
@@ -933,7 +933,7 @@ void mem_shd_flt_chained_seeds(const mem_opt_t *opt, const bntseq_t *bns, const 
 							read_display[f] = '\0';
 					}
 				}
-				char read_t[320] __aligned__;
+				char read_t[320] aligned16;
 				int q, f;
 				for (q = qend - 1, f = 0; f < 320; q--, f++) {
 					if (q >= qbeg)
@@ -951,7 +951,7 @@ void mem_shd_flt_chained_seeds(const mem_opt_t *opt, const bntseq_t *bns, const 
 						rbeg = l_pac;
 				}
 				rseq = bns_fetch_seq(bns, pac, &rbeg, mid, &rend, &rid);
-				char ref_display[320] __aligned__;
+				char ref_display[320] aligned16;
 				{
 					int r, f;
 					for (r = (rend - rbeg) - 1, f = 0; f < 320; r--, f++) {
@@ -961,7 +961,7 @@ void mem_shd_flt_chained_seeds(const mem_opt_t *opt, const bntseq_t *bns, const 
 							ref_display[f] = '\0';
 					}
 				}
-				char ref_t[320] __aligned__;
+				char ref_t[320] aligned16;
 				int r;
 				for (r = (rend - rbeg) - 1, f = 0; f < 320; r--, f++) {
 					if (r >= 0)
