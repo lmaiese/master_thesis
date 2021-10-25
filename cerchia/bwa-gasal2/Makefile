@@ -43,7 +43,7 @@ ANALYSIS_FILENAME=125k
 VALGRIND=valgrind
 #--track-origins=yes -tool=memcheck --leak-check=yes --show-reachable=yes --num-callers=20 --track-fds=yes
 NVPROF=
-NVPROF= nvprof -s -f -o /home/usuaris/lmaiese/nvprofout/$(ANALYSIS_FILENAME).nvprof
+NVPROF= /home/usuaris/lmaiese/cuda-11.0/bin/nvprof -s -f -o /home/usuaris/lmaiese/nvprofout/$(ANALYSIS_FILENAME).nvprof
 
 ifeq ($(shell uname -s),Linux)
 	LIBS += -lrt
