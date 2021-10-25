@@ -1,5 +1,5 @@
-CXX=g++
-CC=gcc
+CXX=g++ -fPIC
+CC=gcc -fPIC
 VPATH=src:obj:lib
 OBJ_DIR=./obj/
 LIB_DIR=./lib/
@@ -12,7 +12,7 @@ BOOST_INCLUDE_DIR = ../boost_1_75_0
 #SHD_DIR=./src/shd_filter/
 #CC=clang --analyze
 CFLAGS=-g -fopenmp -Wall -Wno-unused-function -O2 -msse4.2 -std=c++11 -fpermissive -fPIC
-NVCCFLAGS = -g -lineinfo --gpu-architecture=compute_35 --gpu-code=sm_35 -O3 -Xcompiler -Wall -Xptxas -Werror --default-stream per-thread 
+NVCCFLAGS = -g -lineinfo --gpu-architecture=compute_35 --gpu-code=sm_35 -O3 -Xcompiler -Wall -Xptxas -Werror --default-stream per-thread -fPIC 
 WRAP_MALLOC=-DUSE_MALLOC_WRAPPERS
 AR=ar
 DFLAGS=-DHAVE_PTHREAD $(WRAP_MALLOC)
