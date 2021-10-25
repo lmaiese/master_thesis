@@ -16,7 +16,7 @@
 
 #include "../GASAL2/src/gasal_align.h"
 
-#include "../GASAL2/src/libStatGen/include/SamFile.h
+#include "../GASAL2/src/libStatGen/include/SamFile.h"
 #include "../GASAL2/src/libStatGen/include/SamFileHeader.h"
 
 // J.L. 2019-01-13 - select GPU when using more than one. Use the first available (0) by default.
