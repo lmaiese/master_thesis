@@ -11,7 +11,7 @@ BOOST_INCLUDE_DIR = ../boost_1_75_0
 
 #SHD_DIR=./src/shd_filter/
 #CC=clang --analyze
-CFLAGS=-g -fopenmp -Wall -Wno-unused-function -O2 -msse4.2 -std=c++11 -fpermissive
+CFLAGS=-g -fopenmp -Wall -Wno-unused-function -O2 -msse4.2 -std=c++11 -fpermissive -fPIC
 NVCCFLAGS = -g -lineinfo --gpu-architecture=compute_35 --gpu-code=sm_35 -O3 -Xcompiler -Wall -Xptxas -Werror --default-stream per-thread 
 WRAP_MALLOC=-DUSE_MALLOC_WRAPPERS
 AR=ar
@@ -100,7 +100,7 @@ srr150nvprof: all
 
 125k: all
 		$(NVPROF) --cpu-profiling on --profile-from-start on  --unified-memory-profiling off -o $(NVPROF_OUTPUT_DIR)/profile_$(THREAD_NUMBER)t_morebytes.nvprof ./$(PROG) protein_aln -g -t $(THREAD_NUMBER) -l $(READ_LENGTH) -v 1 $(REFERENCE) $(READ1) $(READ2) > $(OUTPUT_SAM)
-		sha256sum $(OUTPUT_SAM) -fPIC
+		sha256sum $(OUTPUT_SAM) 
 
 
 
