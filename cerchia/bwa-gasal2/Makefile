@@ -6,6 +6,7 @@ LIB_DIR=./lib/
 CUDA_LIB_DIR=/home/usuaris/lmaiese/cuda-11.0/lib64
 GASAL_LIB_DIR = ./GASAL2/lib/
 GASAL_INCLUDE_DIR = ./GASAL2/include/
+GASAL_LIB_STATE_GEN_DIR = ./GASAL2/src/libStatGen/
 BOOST_INCLUDE_DIR = ../boost_1_75_0
 
 #SHD_DIR=./src/shd_filter/
@@ -116,7 +117,7 @@ makedir:
 	@echo "If you donot see anything below this line then there is nothing to \"make\""
 
 bwa-gasal2:libbwa.a libshd_filter.a  $(AOBJS) main.o
-		$(CXX) $(CFLAGS) $(DFLAGS) $(AOBJS_PATH) $(OBJ_DIR)main.o -o $@ -L$(LIB_DIR) -L$(CUDA_LIB_DIR) -L$(GASAL_LIB_DIR) -L ./GASAL2/libStatGen/ -lbwa -lshd_filter -lgasal $(LIBS)
+		$(CXX) $(CFLAGS) $(DFLAGS) $(AOBJS_PATH) $(OBJ_DIR)main.o -o $@ -L$(LIB_DIR) -L$(CUDA_LIB_DIR) -L$(GASAL_LIB_DIR) -L (GASAL_LIB_STATE_GEN_DIR) -lbwa -lshd_filter -lgasal $(LIBS)
 
 
 libbwa.a:$(LOBJS)
