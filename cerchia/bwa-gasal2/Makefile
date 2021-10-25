@@ -100,7 +100,7 @@ srr150nvprof: all
 
 125k: all
 		$(NVPROF) --cpu-profiling on --profile-from-start on  --unified-memory-profiling off -o $(NVPROF_OUTPUT_DIR)/profile_$(THREAD_NUMBER)t_morebytes.nvprof ./$(PROG) protein_aln -g -t $(THREAD_NUMBER) -l $(READ_LENGTH) -v 1 $(REFERENCE) $(READ1) $(READ2) > $(OUTPUT_SAM)
-		sha256sum $(OUTPUT_SAM)
+		sha256sum $(OUTPUT_SAM) -fPIC
 
 
 
