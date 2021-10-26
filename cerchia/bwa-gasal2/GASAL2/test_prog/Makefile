@@ -28,7 +28,7 @@ FILES_SHORT=short_query_batch.fasta short_target_batch.fasta
 all: clean test_prog.out
 
 test_prog.out: test_prog.o
-	g++ -std=c++11 -O3 -o test_prog.out -L$(CUDA_LD_LIBRARY) -L$(GASAL_LIBRARY) test_prog.o -fopenmp -lcudart -lgasal
+	g++ -std=c++11 -O3 -o test_prog.out -L$(CUDA_LD_LIBRARY) test_prog.o -fopenmp -lcudart -L$(GASAL_LIBRARY) -lgasal
 
 clean:
 	rm -f -r *~ *.exe *.o *.out *.txt *~ *.tsv
