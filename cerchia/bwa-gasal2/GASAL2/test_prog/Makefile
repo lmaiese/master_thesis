@@ -1,4 +1,5 @@
 CUDA_LD_LIBRARY=/home/usuaris/lmaiese/cuda-11.0//targets/x86_64-linux/lib
+GASAL_LIBRARY=/home/usuaris/lmaiese/master_thesis/cerchia/bwa-gasal2/GASAL2/src
 ANALYSIS_FILENAME=analysis
 # prefix1 can be optirun in case you need to run it from an optimus-enabled laptop.
 PREFIX1=
@@ -27,7 +28,7 @@ FILES_SHORT=short_query_batch.fasta short_target_batch.fasta
 all: clean test_prog.out
 
 test_prog.out: test_prog.o
-	g++ -std=c++11 -O3 -o test_prog.out -L$(CUDA_LD_LIBRARY) test_prog.o -fopenmp -lcudart -lgasal
+	g++ -std=c++11 -O3 -o test_prog.out -L$(CUDA_LD_LIBRARY) -L$(GASAL_LIBRARY) test_prog.o -fopenmp -lcudart -lgasal
 
 clean:
 	rm -f -r *~ *.exe *.o *.out *.txt *~ *.tsv
