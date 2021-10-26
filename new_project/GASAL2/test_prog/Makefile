@@ -30,7 +30,7 @@ test_prog.out: test_prog.o
 	g++ -std=c++11 -O3 -o test_prog.out -L$(CUDA_LD_LIBRARY) -L../lib test_prog.o -fopenmp -lcudart -lgasal
 
 clean:
-	rm -f -r *~ *.exe *.o *.out
+	rm -f -r *~ *.exe *.o *.out *.txt *~ *.tsv
 	
 test_prog.o: Timer.h
  

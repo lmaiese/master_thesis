@@ -1,7 +1,11 @@
 
 
-#include "../include/gasal_header.h"
-
+#include "../include/gasal.h"		// include cstdlib, cstdint
+#include "../include/args_parser.h" // include iostream, string, fstream
+#include "../include/gasal_align.h" 
+#include "../include/host_batch.h"  // include cstdio, cstring
+#include "../include/ctors.h"
+#include "../include/interfaces.h"  // inclued cstdio, cstring, cstdlib
 
 #include <vector>
 #include <unistd.h>
@@ -11,23 +15,24 @@
 
 #define NB_STREAMS 2
 
-//#define STREAM_BATCH_SIZE (262144)
+//#define GPU_BATCH_SIZE (262144)
 // this gives each stream HALF of the sequences.
-//#define STREAM_BATCH_SIZE ceil((double)target_seqs.size() / (double)(2))
+//#define GPU_BATCH_SIZE ceil((double)target_seqs.size() / (double)(2))
 
-#define STREAM_BATCH_SIZE 5000//ceil((double)target_seqs.size() / (double)(2 * 2))
+#define GPU_BATCH_SIZE ceil((double)target_seqs.size() / (double)(2 * 2))
 
 
 #define DEBUG
 
 #define MAX(a,b) (a>b ? a : b)
 
-//#define GPU_SELECT 0
+// Test server : 0 is for K40c, 1 is for GTX 750 Ti
+#define GPU_SELECT 0
 
 
 int main(int argc, char **argv) {
 
-	//gasal_set_device(GPU_SELECT);
+	gasal_set_device(GPU_SELECT);
 
 	Parameters *args;
 	args = new Parameters(argc, argv);
@@ -191,7 +196,7 @@ int main(int argc, char **argv) {
 		thread_seqs_idx[i] = n_seqs_alloc;
 		if (n_seqs_alloc + thread_batch_size < total_seqs) thread_n_seqs[i] = thread_batch_size;
 		else thread_n_seqs[i] = total_seqs - n_seqs_alloc;
-		thread_n_batchs[i] = (int)ceil((double)thread_n_seqs[i]/(STREAM_BATCH_SIZE));
+		thread_n_batchs[i] = (int)ceil((double)thread_n_seqs[i]/(GPU_BATCH_SIZE));
 		n_seqs_alloc += thread_n_seqs[i];
 	}
 
@@ -224,10 +229,14 @@ int main(int argc, char **argv) {
 		*/		
 		//initializing the streams by allocating the required CPU and GPU memory
 		// note: the calculations of the detailed sizes to allocate could be done on the library side (to hide it from the user's perspective)
-		gasal_init_streams(&(gpu_storage_vecs[z]), (maximum_sequence_length_query + 7) , //TODO: remove maximum_sequence_length_query
-						(maximum_sequence_length + 7) ,
-						 STREAM_BATCH_SIZE, //device
-						 args);
+		gasal_init_streams(&(gpu_storage_vecs[z]), 
+						00.1 * (maximum_sequence_length_query + 7) * GPU_BATCH_SIZE , //TODO: remove maximum_sequence_length_query
+						004 * (maximum_sequence_length + 7) * GPU_BATCH_SIZE , 
+						0.04 * (maximum_sequence_length + 7) * GPU_BATCH_SIZE ,
+						001 * (maximum_sequence_length + 7) * GPU_BATCH_SIZE , 
+						002 * GPU_BATCH_SIZE, //host // maximum number of alignments is bigger on target than on query side.
+						001 * GPU_BATCH_SIZE, //device
+						args);
 	}
 	#ifdef DEBUG
 		std::cerr << "[TEST_PROG DEBUG]: ";
@@ -276,7 +285,7 @@ int main(int argc, char **argv) {
 				//-----------Create a batch of sequences to be aligned on the GPU. The batch contains (target_seqs.size() / NB_STREAMS) number of sequences-----------------------
 
 
-				for (int i = curr_idx; seqs_done < n_seqs && j < (STREAM_BATCH_SIZE); i++, j++, seqs_done++)
+				for (int i = curr_idx; seqs_done < n_seqs && j < (GPU_BATCH_SIZE); i++, j++, seqs_done++) 
 				{
 
 					gpu_batch_arr[gpu_batch_arr_idx].gpu_storage->current_n_alns++ ;
@@ -328,7 +337,7 @@ int main(int argc, char **argv) {
 				uint32_t query_batch_bytes = query_batch_idx;
 				uint32_t target_batch_bytes = target_batch_idx;
 				gpu_batch_arr[gpu_batch_arr_idx].batch_start = curr_idx;
-				curr_idx += (STREAM_BATCH_SIZE);
+				curr_idx += (GPU_BATCH_SIZE);
 
 				//----------------------------------------------------------------------------------------------------
 				//-----------------calling the GASAL2 non-blocking alignment function---------------------------------
@@ -356,7 +365,7 @@ int main(int argc, char **argv) {
 						
 						
 						/// WARNING : INEQUALITY ON ENUM: CAN BREAK IF ENUM ORDER IS CHANGED
-						if ((args->start_pos == WITH_START || args->start_pos == WITH_TB)
+						if (args->start_pos == WITH_START 
 							&& ((args->algo == SEMI_GLOBAL && (args->semiglobal_skipping_head != NONE || args->semiglobal_skipping_head != NONE))
 								|| args->algo > SEMI_GLOBAL))
 						{
@@ -379,53 +388,6 @@ int main(int argc, char **argv) {
 							std::cout << "\t2nd_target_batch_end=" << (gpu_batch_arr[gpu_batch_arr_idx].gpu_storage)->host_res_second->target_batch_end[j] ;
 						}
 
-						if (args->start_pos == WITH_TB) {
-							std::cout << "\tCIGAR=";
-							int u;
-							int offset = (gpu_batch_arr[gpu_batch_arr_idx].gpu_storage)->host_query_batch_offsets[j];
-							int n_cigar_ops = (gpu_batch_arr[gpu_batch_arr_idx].gpu_storage)->host_res->n_cigar_ops[j];
-							int last_op = ((gpu_batch_arr[gpu_batch_arr_idx].gpu_storage)->host_res->cigar[offset + n_cigar_ops - 1]) & 3;
-							int count = ((gpu_batch_arr[gpu_batch_arr_idx].gpu_storage)->host_res->cigar[offset + n_cigar_ops - 1]) >> 2;
-							for (u = n_cigar_ops - 2; u >= 0 ; u--){
-								int curr_op = ((gpu_batch_arr[gpu_batch_arr_idx].gpu_storage)->host_res->cigar[offset + u]) & 3;
-								if (curr_op == last_op) {
-									count +=  ((gpu_batch_arr[gpu_batch_arr_idx].gpu_storage)->host_res->cigar[offset + u]) >> 2;
-								} else {
-									char op;
-									switch (last_op) {
-									case 0: op = 'M';
-									break;
-									case 1: op = 'X';
-									break;
-									case 2: op = 'D';
-									break;
-									case 3: op = 'I';
-									break;
-									default: op = 'E';
-									break;
-
-									}
-									std::cout << count << op;
-									count =  ((gpu_batch_arr[gpu_batch_arr_idx].gpu_storage)->host_res->cigar[offset + u]) >> 2;
-
-								}
-								last_op = curr_op;
-
-							}
-							char op;
-							switch (last_op) {
-							case 0: op = 'M';
-							break;
-							case 1: op = 'X';
-							break;
-							case 2: op = 'D';
-							break;
-							case 3: op = 'I';
-							break;
-
-							}
-							std::cout << count << op;
-						}
 						std::cout << std::endl;
 					}
 					}
