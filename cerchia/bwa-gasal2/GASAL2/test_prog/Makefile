@@ -1,5 +1,5 @@
 CUDA_LD_LIBRARY=/home/usuaris/lmaiese/cuda-11.0//targets/x86_64-linux/lib
-GASAL_LIBRARY=/home/usuaris/lmaiese/master_thesis/cerchia/bwa-gasal2/GASAL2/src
+GASAL_LIBRARY=/home/usuaris/lmaiese/master_thesis/cerchia/bwa-gasal2/GASAL2/lib
 ANALYSIS_FILENAME=analysis
 # prefix1 can be optirun in case you need to run it from an optimus-enabled laptop.
 PREFIX1=

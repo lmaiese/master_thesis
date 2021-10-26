@@ -117,7 +117,7 @@ makedir:
 	@echo "If you donot see anything below this line then there is nothing to \"make\""
 
 bwa-gasal2:libbwa.a libshd_filter.a  $(AOBJS) main.o
-		$(CXX) $(CFLAGS) $(DFLAGS) $(AOBJS_PATH) $(OBJ_DIR)main.o -o $@ -L$(LIB_DIR) -L$(CUDA_LIB_DIR) -L$(GASAL_LIB_DIR) -L ./GASAL2/src/libStatGen/ -lbwa -lshd_filter -lgasal $(LIBS)
+		$(CXX) $(CFLAGS) $(DFLAGS) $(AOBJS_PATH) $(OBJ_DIR)main.o -o $@ -L$(LIB_DIR) -L$(CUDA_LIB_DIR) -L$(GASAL_LIB_DIR) -L ./GASAL2/src/libStatGen/ -lbwa -lshd_filter -lcudart -lgasal $(LIBS)
 
 
 libbwa.a:$(LOBJS)
