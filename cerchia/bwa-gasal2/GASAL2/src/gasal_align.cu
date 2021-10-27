@@ -690,7 +690,8 @@ void write_sam_and_stats(std::vector<std::string> refs, std::vector<std::string>
 
 
 void kernel_driver_aa(std::vector<std::string> reads, std::vector<std::string> contigs, alignment_results *alignments, short scoring_matrix[], short openGap, short extendGap) {
-    std::cout<<"Proviamo a fare un debuggino:"<<"\n";
+    std::cerr<<"Proviamo a fare un debuggino:"<<"\n"<<std::endl;
+    std::cerr<<"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:"<<"\n"<<std::endl;
     unsigned maxContigSize = getMaxLength(contigs);
     unsigned maxReadSize = getMaxLength(reads);
     unsigned totalAlignments = contigs.size(); // assuming that read and contig vectors are same length
