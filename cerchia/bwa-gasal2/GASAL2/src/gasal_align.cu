@@ -730,7 +730,7 @@ void kernel_driver_aa(std::vector<std::string> reads, std::vector<std::string> c
       int BLOCKS_l = alignmentsPerDevice;
       if(my_cpu_id == deviceCount - 1)
           BLOCKS_l += leftOver_device;
-      if(my_cpu_id == 0)std::cout<<"Number of GPUs being used:"<<omp_get_num_threads()<<"\n";
+      if(my_cpu_id == 0)std::cout<<"Number of GPUs being usedddddddddddddddd:"<<omp_get_num_threads()<<"\n";
       unsigned leftOvers = BLOCKS_l % its;
       unsigned stringsPerIt = BLOCKS_l / its;
       gpu_alignments gpu_data(stringsPerIt + leftOvers); // gpu mallocs
