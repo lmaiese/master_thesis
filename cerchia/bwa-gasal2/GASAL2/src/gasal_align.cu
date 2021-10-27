@@ -757,6 +757,7 @@ void kernel_driver_aa(std::vector<std::string> reads, std::vector<std::string> c
       float total_packing = 0;
       auto start2 = NOW;
       std::cout<<"loop begin\n";
+      std::cout<<"mado quanto non mi è chiaro\n";
       for(int perGPUIts = 0; perGPUIts < its; perGPUIts++)
       {
           auto packing_start = NOW;

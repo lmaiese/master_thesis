@@ -313,6 +313,7 @@ gpu_bsw_driver::kernel_driver_aa(std::vector<std::string> reads, std::vector<std
 
       auto start2 = NOW;
       std::cout<<"loop begin\n";
+      std::cout<<"non mi è chiarooooooooooooooo\n";
       for(int perGPUIts = 0; perGPUIts < its; perGPUIts++)
       {
           auto packing_start = NOW;
