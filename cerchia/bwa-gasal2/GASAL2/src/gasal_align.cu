@@ -690,6 +690,7 @@ void write_sam_and_stats(std::vector<std::string> refs, std::vector<std::string>
 
 
 void kernel_driver_aa(std::vector<std::string> reads, std::vector<std::string> contigs, alignment_results *alignments, short scoring_matrix[], short openGap, short extendGap) {
+    std::cout<<"Proviamo a fare un debuggino:"<<"\n";
     unsigned maxContigSize = getMaxLength(contigs);
     unsigned maxReadSize = getMaxLength(reads);
     unsigned totalAlignments = contigs.size(); // assuming that read and contig vectors are same length
@@ -703,7 +704,7 @@ void kernel_driver_aa(std::vector<std::string> reads, std::vector<std::string> c
     int deviceCount;
     cudaGetDeviceCount(&deviceCount);
     omp_set_num_threads(24);// one OMP thread per GPU
-    //std::cerr<<"Number of available GPUs:"<<deviceCount<<"\n";
+    std::cout<<"Number of available GPUs:"<<deviceCount<<"\n";
     cudaDeviceProp prop[deviceCount];
     for(int i = 0; i < deviceCount; i++)
       cudaGetDeviceProperties(&prop[i], 0);
@@ -716,7 +717,7 @@ void kernel_driver_aa(std::vector<std::string> reads, std::vector<std::string> c
     #pragma omp parallel
     {
       int my_cpu_id = omp_get_thread_num()%2;
-      //std::cerr << "\n" << "[INFO] my_cpu_id: " << my_cpu_id << "\n" << std::endl;
+      std::cerr << "\n" << "[INFO] my_cpu_id: " << my_cpu_id << "\n" << std::endl;
       cudaSetDevice(my_cpu_id);
       int myGPUid;
       cudaGetDevice(&myGPUid);
