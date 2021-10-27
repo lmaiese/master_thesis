@@ -44,7 +44,7 @@ typedef struct {
 } eh_t;
 
 template <typename B>
-__global__ void gasal_ksw_kernel(uint32_t *packed_query_batch, uint32_t *packed_target_batch,  uint32_t *query_batch_lens, uint32_t *target_batch_lens, uint32_t *query_batch_offsets, uint32_t *target_batch_offsets, uint32_t *seed_score, gasal_res_t *device_res, gasal_res_t *device_res_second, int n_tasks)
+__global__ void gasal_ksw_kernel(uint32_t *packed_query_batch, uint32_t *packed_target_batch,  uint32_t *query_batch_lens, uint32_t *target_batch_lens, uint32_t *query_batch_offsets, uint32_t *target_batch_offsets, uint32_t *seed_score, gasal_res_t *device_res, gasal_res_t *device_res_second, int n_tasks, int32_t zdrop)
 {
     const uint32_t tid = (blockIdx.x * blockDim.x) + threadIdx.x;//thread ID
     if (tid >= n_tasks) return;
@@ -59,16 +59,16 @@ __global__ void gasal_ksw_kernel(uint32_t *packed_query_batch, uint32_t *packed_
     int32_t subScore;
     uint32_t target_tile_id, target_base_id, query_tile_id, query_base_id;
     uint32_t gpac, rpac, gbase, rbase;
-    int zdrop = 0;
+    
 
     int o_del = _cudaGapO;
     int o_ins = _cudaGapO;
     int e_del = _cudaGapExtend;
     int e_ins = _cudaGapExtend;
 
-    eh_t eh[MAX_QUERY_LEN] ; // score array
+    eh_t eh[MAX_SEQ_LEN] ; // score array
     int i, j, oe_del = o_del + e_del, oe_ins = o_ins + e_ins, beg, end, max, max_i, max_j, max_ie, gscore, max_off;
-    for (i = 0; i < MAX_QUERY_LEN; i++)
+    for (i = 0; i < MAX_SEQ_LEN; i++)
     {
         eh[i].h = 0;
         eh[i].e = 0;
@@ -132,7 +132,8 @@ __global__ void gasal_ksw_kernel(uint32_t *packed_query_batch, uint32_t *packed_
                     eh_t *p = &eh[j];
                     int h, M = p->h, e = p->e; // get H(i-1,j-1) and E(i-1,j)
                     p->h = h1;          // set H(i,j-1) for the next row
-                    DEV_GET_SUB_SCORE_LOCAL(subScore, rbase, gbase);
+                    subScore = (rbase == gbase) ? _cudaMatchScore : -_cudaMismatchScore;
+                    subScore = ((rbase == N_VALUE) || (gbase == N_VALUE)) ? -N_PENALTY : subScore;
                     M = M ? M + subScore : 0;          // separating H and M to disallow a cigar like "100M3I3D20M"
                     h = M > e ? M : e;   // e and f are guaranteed to be non-negative, so h>=0 even if M<0
                     h = h > f ? h : f;
