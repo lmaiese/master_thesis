@@ -501,7 +501,11 @@ void protein_aln(int argc, char *argv[]) {
 	std::cerr << "\n" << "STARTED" << "\n" << std::endl;
 
 	string refFile = argv[8];
+
 	string queFile = argv[9];
+
+	std::cerr << "\n" << refFile << "\n" << std::endl;
+	std::cerr << "\n" << queFile << "\n" << std::endl;
 	string out_file = "protein_alignment.sam";
 
 	std::cerr << "\n" << "refFile = " << refFile << "\n" << std::endl;
