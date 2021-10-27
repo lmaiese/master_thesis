@@ -44,6 +44,7 @@ gpu_bsw_driver::kernel_driver_dna(std::vector<std::string> reads, std::vector<st
         cudaStreamCreate(&streams_cuda[stm]);
       }
 
+        std::cout<<"Ma forse magari debuggiamo qui:"<<"\n";
 
         int BLOCKS_l = alignmentsPerDevice;
         if(my_cpu_id == deviceCount - 1)
