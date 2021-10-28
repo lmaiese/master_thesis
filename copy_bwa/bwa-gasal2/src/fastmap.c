@@ -500,11 +500,11 @@ void protein_aln(int argc, char *argv[]) {
 	
 	std::cerr << "\n" << "STARTED" << "\n" << std::endl;
 
-	string refFile = argv[8];
+	std::string refFile = argv[8];
 
-	string queFile = argv[9];
+	std::string queFile = argv[9];
 
-	string out_file = "protein_alignment.sam";
+	std::string out_file = "protein_alignment.sam";
 
 	std::cerr << "\n" << "refFile = " << refFile << "\n" << std::endl;
 	std::cerr << "queFile = " << queFile << "\n" << std::endl;
@@ -512,7 +512,7 @@ void protein_aln(int argc, char *argv[]) {
 
 	long long int total_cells = 0;
 	vector<std::string> G_sequencesA, G_sequencesB;
-	string myInLine;
+	std::string myInLine;
 	int largestA = 0, largestB = 0, totSizeA = 0, totSizeB = 0;
 
 	ifstream ref_file(refFile), quer_file(queFile);
@@ -522,7 +522,7 @@ void protein_aln(int argc, char *argv[]) {
 				if(myInLine[0] == '>') {
 					continue;
 				} else {
-					string seq = myInLine;
+					std::string seq = myInLine;
 					//std::cerr << seq << "\n" << std::endl;
 					G_sequencesA.push_back(seq);
 					//std::cerr << "ref:" << G_sequencesA.size() << std::endl;
@@ -540,7 +540,7 @@ void protein_aln(int argc, char *argv[]) {
 			if(myInLine[0] == '>') {
 				continue;
 			} else {
-				string seq = myInLine;
+				std::string seq = myInLine;
 				G_sequencesB.push_back(seq);
 				//std::cout << "que:" << G_sequencesB.size() << std::endl;
 				totSizeB += seq.size();
