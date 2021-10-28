@@ -14,10 +14,10 @@
 #include "kseq.h"
 //#include <omp.h>
 
-#include "gasal_align.h"
+#include "/src/gasal_align.h"
 
-#include "libStatGen/include/SamFile.h"
-#include "libStatGen/include/SamFileHeader.h"
+#include "/src/libStatGen/include/SamFile.h"
+#include "/src/libStatGen/include/SamFileHeader.h"
 
 // J.L. 2019-01-13 - select GPU when using more than one. Use the first available (0) by default.
 #define GPU_SELECT (0)
@@ -515,7 +515,7 @@ void protein_aln(int argc, char *argv[]) {
 	std::string myInLine;
 	int largestA = 0, largestB = 0, totSizeA = 0, totSizeB = 0;
 
-	std::ifstream ref_file(refFile), quer_file(queFile);
+	ifstream ref_file(refFile), quer_file(queFile);
 
 	if(ref_file.is_open()) {
 		while(getline(ref_file, myInLine)) {
@@ -536,7 +536,7 @@ void protein_aln(int argc, char *argv[]) {
 	}
 
 	if(quer_file.is_open()) {
-		while(getline(que_file, myInLine)) {
+		while(getline(quer_file, myInLine)) {
 			if(myInLine[0] == '>') {
 				continue;
 			} else {
