@@ -3,10 +3,11 @@
 #include "res.h"
 #include "gasal_align.h"
 #include "gasal_kernels.h"
+#include "host_batch.h"
 
 
 
-inline void gasal_kernel_launcher(int32_t N_BLOCKS, int32_t BLOCKDIM, algo_type algo, comp_start start, gasal_gpu_storage_t *gpu_storage, int32_t actual_n_alns, int32_t k_band, data_source semiglobal_skipping_head, data_source semiglobal_skipping_tail, Bool secondBest) 
+inline void gasal_kernel_launcher(int32_t N_BLOCKS, int32_t BLOCKDIM, algo_type algo, comp_start start, gasal_gpu_storage_t *gpu_storage, int32_t actual_n_alns, int32_t k_band, data_source semiglobal_skipping_head, data_source semiglobal_skipping_tail, Bool secondBest, int32_t zdrop) 
 {
 	switch(algo)
 	{
@@ -145,43 +146,25 @@ void gasal_aln_async(gasal_gpu_storage_t *gpu_storage, const uint32_t actual_que
 	host_batch_t *current = gpu_storage->extensible_host_unpacked_query_batch;
 	while (current != NULL)
 	{
-		if (current->next != NULL ) 
-		{
-			CHECKCUDAERROR(cudaMemcpyAsync( &(gpu_storage->unpacked_query_batch[current->offset]), 
-											current->data, 
-											current->next->offset - current->offset,
-											cudaMemcpyHostToDevice, 
-											gpu_storage->str ) );
-			
-		} else {
-			// it's the last page to copy
-			CHECKCUDAERROR(cudaMemcpyAsync( &(gpu_storage->unpacked_query_batch[current->offset]), 
-											current->data, 
-											actual_query_batch_bytes - current->offset, 
-											cudaMemcpyHostToDevice, 
-											gpu_storage->str ) );
-		}
+		//gasal_host_batch_printall(current);
+		CHECKCUDAERROR(cudaMemcpyAsync( &(gpu_storage->unpacked_query_batch[current->offset]), 
+										current->data, 
+										current->data_size,
+										cudaMemcpyHostToDevice, 
+										gpu_storage->str ) );
+
 		current = current->next;
 	}
 
 	current = gpu_storage->extensible_host_unpacked_target_batch;
 	while (current != NULL)
 	{
-		if (current->next != NULL ) {
-			CHECKCUDAERROR(cudaMemcpyAsync( &(gpu_storage->unpacked_target_batch[current->offset]), 
-											current->data, 
-											current->next->offset - current->offset,
-											cudaMemcpyHostToDevice, 
-											gpu_storage->str ) );
+		CHECKCUDAERROR(cudaMemcpyAsync( &(gpu_storage->unpacked_target_batch[current->offset]), 
+										current->data, 
+										current->data_size,
+										cudaMemcpyHostToDevice, 
+										gpu_storage->str ) );
 
-		} else {
-			// it's the last page to copy
-			CHECKCUDAERROR(cudaMemcpyAsync( &(gpu_storage->unpacked_target_batch[current->offset]), 
-											current->data, 
-											actual_target_batch_bytes - current->offset, 
-											cudaMemcpyHostToDevice, 
-											gpu_storage->str ) );
-		}
 		current = current->next;
 	}
 
@@ -257,7 +240,7 @@ void gasal_aln_async(gasal_gpu_storage_t *gpu_storage, const uint32_t actual_que
 	}
 	
     //--------------------------------------launch alignment kernels--------------------------------------------------------------
-	gasal_kernel_launcher(N_BLOCKS, BLOCKDIM, params->algo, params->start_pos, gpu_storage, actual_n_alns, params->k_band, params->semiglobal_skipping_head, params->semiglobal_skipping_tail, params->secondBest);
+	gasal_kernel_launcher(N_BLOCKS, BLOCKDIM, params->algo, params->start_pos, gpu_storage, actual_n_alns, params->k_band, params->semiglobal_skipping_head, params->semiglobal_skipping_tail, params->secondBest, params->zdrop);
 
 
         //-----------------------------------------------------------------------------------------------------------------------
@@ -306,7 +289,6 @@ void gasal_aln_async(gasal_gpu_storage_t *gpu_storage, const uint32_t actual_que
 	}
 
     gpu_storage->is_free = 0; //set the availability of current stream to false
-
 }
 
 
@@ -322,8 +304,9 @@ int gasal_is_aln_async_done(gasal_gpu_storage_t *gpu_storage)
 			exit(EXIT_FAILURE);
 		}
 	}
+	gasal_host_batch_reset(gpu_storage);
 	gpu_storage->is_free = 1;
-
+	gpu_storage->current_n_alns = 0;
 	return 0;
 }
 

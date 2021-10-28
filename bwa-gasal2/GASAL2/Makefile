@@ -4,7 +4,7 @@ N_CODE=
 N_PENALTY=
 
 GPU_COMPUTE_ARCH=$(subst sm,compute,$(GPU_SM_ARCH))
-NVCC=/home/usuaris/lmaiese/cuda//bin/nvcc
+NVCC=/home/usuaris/lmaiese/cuda-11.0//bin/nvcc
 CC=g++
 SRC_DIR=./src/
 OBJ_DIR=./obj/

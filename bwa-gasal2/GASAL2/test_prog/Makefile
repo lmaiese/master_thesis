@@ -3,15 +3,15 @@ ANALYSIS_FILENAME=analysis
 # prefix1 can be optirun in case you need to run it from an optimus-enabled laptop.
 PREFIX1=
 #i prefix2 can be nvprof. use preferably the following : nvprof --profile-api-trace none -s -f -o /tmp/.nvprof/$(ANALYSIS_FILENAME).nvprof
-PREFIX2= 
+PREFIX2=valgrind
 #suffix1 and 2 can be an output file.
 SUFFIX1=> golden.log
 SUFFIX2=> out.log
 
 PRGM=test_prog.out
  
-OPTARGS1=-p -y local 
-OPTARGS2=-p -y ksw 
+OPTARGS1=-p -y local
+OPTARGS2=-p -y local
 
 
 FILES_HUMAN600=reads_600_human_10M.fasta ref_600_human_10M.fasta
@@ -27,7 +27,7 @@ FILES_SHORT=short_query_batch.fasta short_target_batch.fasta
 all: clean test_prog.out
 
 test_prog.out: test_prog.o
-	g++ -std=c++11 -O3 -o test_prog.out -L$(CUDA_LD_LIBRARY) -I ./ test_prog.o -fopenmp -lcudart -lgasal
+	g++ -std=c++11 -O3 -o test_prog.out -L$(CUDA_LD_LIBRARY) -L../lib test_prog.o -fopenmp -lcudart -lgasal
 
 clean:
 	rm -f -r *~ *.exe *.o *.out *.txt *~ *.tsv
