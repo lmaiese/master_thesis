@@ -14,10 +14,10 @@
 #include "kseq.h"
 //#include <omp.h>
 
-#include "/src/gasal_align.h"
+#include "gasal_align.h"
 
-#include "/src/libStatGen/include/SamFile.h"
-#include "/src/libStatGen/include/SamFileHeader.h"
+#include "SamFile.h"
+#include "SamFileHeader.h"
 
 // J.L. 2019-01-13 - select GPU when using more than one. Use the first available (0) by default.
 #define GPU_SELECT (0)
