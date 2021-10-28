@@ -12,9 +12,17 @@
 #include "utils.h"
 #include "bntseq.h"
 #include "kseq.h"
+//#include <omp.h>
+
+#include "../GASAL2/src/gasal_align.h"
+
+#include "../GASAL2/src/libStatGen/include/SamFile.h"
+#include "../GASAL2/src/libStatGen/include/SamFileHeader.h"
 
 // J.L. 2019-01-13 - select GPU when using more than one. Use the first available (0) by default.
 #define GPU_SELECT (0)
+
+using namespace std;
 
 KSEQ_DECLARE(gzFile)
 
@@ -90,11 +98,11 @@ static void *process(void *shared, int step, void *_data)
 		return data;
 	} else if (step == 2) {
 		for (i = 0; i < data->n_seqs; ++i) {
-			if (data->seqs[i].sam) err_fputs(data->seqs[i].sam, stdout);
-			free(data->seqs[i].name); free(data->seqs[i].comment);
-			free(data->seqs[i].seq); free(data->seqs[i].qual); free(data->seqs[i].sam);
+			//if (data->seqs[i].sam) err_fputs(data->seqs[i].sam, stdout);
+			//free(data->seqs[i].name); free(data->seqs[i].comment);
+			//free(data->seqs[i].seq); free(data->seqs[i].qual); free(data->seqs[i].sam);
 		}
-		free(data->seqs); free(data);
+		//free(data->seqs); free(data);
 		return 0;
 	}
 	return 0;
@@ -411,20 +419,24 @@ int gase_aln(int argc, char *argv[])
 	double time_extend = realtime();
 	gpu_storage_vec_arr =  (gasal_gpu_storage_v*)calloc(opt->n_threads, sizeof(gasal_gpu_storage_v));
 	int z;
+        int devices;
+        cudaGetDeviceCount(&devices);
 	for (z = 0; z < opt->n_threads; z++) {
-		// J.L. 2018-12-21 change these to reflect ctors in GASAL2 
+		// J.L. 2018-12-21 change these to reflect ctors in GASAL2
+                cudaSetDevice(z % devices); 
+                gasal_copy_subst_scores(&sub_scores);
 		gpu_storage_vec_arr[z] = gasal_init_gpu_storage_v(2);
 		//gasal_init_streams(&(gpu_storage_vec_arr[z]), 1000*300, 1000*300, 250*1000*600, 80*1000*600, 500*1000, 200*1000, LOCAL, WITH_START);
 		// J.L. 2019-01-07 10:43 TODO remove numbers from here, put them in DEFINES.
 		// Original values below
 		
 		gasal_init_streams(&(gpu_storage_vec_arr[z]), 
-				1000*300 , 		//host_max_query_batch_bytes
-				1000*300 , 		//gpu_max_query_batch_bytes
-				250*1000*600 , 	//host_max_target_batch_bytes
-				80*1000*600 , 	//gpu_max_target_batch_bytes
-				500*1000, 		//host_max_n_alns.
-				200*1000, 		//gpu_max_n_alns
+				30000*10000 , 		//host_max_query_batch_bytes
+				20000*10000 , 		//gpu_max_query_batch_bytes
+				600*1000*200 , 	//host_max_target_batch_bytes
+				600*1000*200 , 	//gpu_max_target_batch_bytes
+				400*10000, 		//host_max_n_alns.
+				400*10000, 		//gpu_max_n_alns
 				args);
 		
 		/*
@@ -481,6 +493,120 @@ int gase_aln(int argc, char *argv[])
 		err_gzclose(fp2); kclose(ko2);
 	}
 	return 0;
+}
+
+
+void protein_aln(int argc, char *argv[]) {
+	
+	std::cerr << "\n" << "STARTED" << "\n" << std::endl;
+
+	string refFile = argv[8];
+
+	string queFile = argv[9];
+
+	string out_file = "protein_alignment.sam";
+
+	std::cerr << "\n" << "refFile = " << refFile << "\n" << std::endl;
+	std::cerr << "queFile = " << queFile << "\n" << std::endl;
+	std::cerr << "out_file = " << out_file << "\n" << std::endl;
+
+	long long int total_cells = 0;
+	vector<std::string> G_sequencesA, G_sequencesB;
+	string myInLine;
+	int largestA = 0, largestB = 0, totSizeA = 0, totSizeB = 0;
+
+	ifstream ref_file(refFile), quer_file(queFile);
+
+	if(ref_file.is_open()) {
+		while(getline(ref_file, myInLine)) {
+				if(myInLine[0] == '>') {
+					continue;
+				} else {
+					string seq = myInLine;
+					//std::cerr << seq << "\n" << std::endl;
+					G_sequencesA.push_back(seq);
+					//std::cerr << "ref:" << G_sequencesA.size() << std::endl;
+					totSizeA += seq.size();
+					if(seq.size() > largestA) {
+						largestA = seq.size();
+					}
+				}
+		}
+		ref_file.close();
+	}
+
+	if(quer_file.is_open()) {
+		while(getline(quer_file, myInLine)) {
+			if(myInLine[0] == '>') {
+				continue;
+			} else {
+				string seq = myInLine;
+				G_sequencesB.push_back(seq);
+				//std::cout << "que:" << G_sequencesB.size() << std::endl;
+				totSizeB += seq.size();
+				if(seq.size() > largestB) {
+					largestB = seq.size();
+				}
+			}
+		}
+		quer_file.close();
+	}
+
+	short scores_matrix[] = {4 ,-1 ,-2 ,-2 ,0 ,-1 ,-1 ,0 ,-2 ,-1 ,-1 ,-1 ,-1 ,-2 ,-1 ,1 ,0 ,-3 ,-2 ,0 ,-2 ,-1 ,0 ,-4 , -1 ,5 ,0 ,-2 ,-3 ,1 ,0 ,-2 ,0 ,-3 ,-2 ,2 ,-1 ,-3 ,-2 ,-1 ,-1 ,-3 ,-2 ,-3 ,-1 ,0 ,-1 ,-4,
+	-2 ,0 ,6 ,1 ,-3 ,0 ,0 ,0 ,1 ,-3 ,-3 ,0 ,-2 ,-3 ,-2 ,1 ,0 ,-4 ,-2 ,-3 ,3 ,0 ,-1 ,-4 ,
+	-2 ,-2 ,1 ,6 ,-3 ,0 ,2 ,-1 ,-1 ,-3 ,-4 ,-1 ,-3 ,-3 ,-1 ,0 ,-1 ,-4 ,-3 ,-3 ,4 ,1 ,-1 ,-4 ,
+	0 ,-3 ,-3 ,-3 ,9 ,-3 ,-4 ,-3 ,-3 ,-1 ,-1 ,-3 ,-1 ,-2 ,-3 ,-1 ,-1 ,-2 ,-2 ,-1 ,-3 ,-3 ,-2 ,-4 ,
+	-1 ,1 ,0 ,0 ,-3 ,5 ,2 ,-2 ,0 ,-3 ,-2 ,1 ,0 ,-3 ,-1 ,0 ,-1 ,-2 ,-1 ,-2 ,0 ,3 ,-1 ,-4 ,
+	-1 ,0 ,0 ,2 ,-4 ,2 ,5 ,-2 ,0 ,-3 ,-3 ,1 ,-2 ,-3 ,-1 ,0 ,-1 ,-3 ,-2 ,-2 ,1 ,4 ,-1 ,-4 ,
+	0 ,-2 ,0 ,-1 ,-3 ,-2 ,-2 ,6 ,-2 ,-4 ,-4 ,-2 ,-3 ,-3 ,-2 ,0 ,-2 ,-2 ,-3 ,-3 ,-1 ,-2 ,-1 ,-4 ,
+	-2 ,0 ,1 ,-1 ,-3 ,0 ,0 ,-2 ,8 ,-3 ,-3 ,-1 ,-2 ,-1 ,-2 ,-1 ,-2 ,-2 ,2 ,-3 ,0 ,0 ,-1 ,-4 ,
+	-1 ,-3 ,-3 ,-3 ,-1 ,-3 ,-3 ,-4 ,-3 ,4 ,2 ,-3 ,1 ,0 ,-3 ,-2 ,-1 ,-3 ,-1 ,3 ,-3 ,-3 ,-1 ,-4 ,
+	-1 ,-2 ,-3 ,-4 ,-1 ,-2 ,-3 ,-4 ,-3 ,2 ,4 ,-2 ,2 ,0 ,-3 ,-2 ,-1 ,-2 ,-1 ,1 ,-4 ,-3 ,-1 ,-4 ,
+	-1 ,2 ,0 ,-1 ,-3 ,1 ,1 ,-2 ,-1 ,-3 ,-2 ,5 ,-1 ,-3 ,-1 ,0 ,-1 ,-3 ,-2 ,-2 ,0 ,1 ,-1 ,-4 ,
+	-1 ,-1 ,-2 ,-3 ,-1 ,0 ,-2 ,-3 ,-2 ,1 ,2 ,-1 ,5 ,0 ,-2 ,-1 ,-1 ,-1 ,-1 ,1 ,-3 ,-1 ,-1 ,-4 ,
+	-2 ,-3 ,-3 ,-3 ,-2 ,-3 ,-3 ,-3 ,-1 ,0 ,0 ,-3 ,0 ,6 ,-4 ,-2 ,-2 ,1 ,3 ,-1 ,-3 ,-3 ,-1 ,-4 ,
+	-1 ,-2 ,-2 ,-1 ,-3 ,-1 ,-1 ,-2 ,-2 ,-3 ,-3 ,-1 ,-2 ,-4 ,7 ,-1 ,-1 ,-4 ,-3 ,-2 ,-2 ,-1 ,-2 ,-4 ,
+	1 ,-1 ,1 ,0 ,-1 ,0 ,0 ,0 ,-1 ,-2 ,-2 ,0 ,-1 ,-2 ,-1 ,4 ,1 ,-3 ,-2 ,-2 ,0 ,0 ,0 ,-4 ,
+	0 ,-1 ,0 ,-1 ,-1 ,-1 ,-1 ,-2 ,-2 ,-1 ,-1 ,-1 ,-1 ,-2 ,-1 ,1 ,5 ,-2 ,-2 ,0 ,-1 ,-1 ,0 ,-4 ,
+	-3 ,-3 ,-4 ,-4 ,-2 ,-2 ,-3 ,-2 ,-2 ,-3 ,-2 ,-3 ,-1 ,1 ,-4 ,-3 ,-2 ,11 ,2 ,-3 ,-4 ,-3 ,-2 ,-4 ,
+	-2 ,-2 ,-2 ,-3 ,-2 ,-1 ,-2 ,-3 ,2 ,-1 ,-1 ,-2 ,-1 ,3 ,-3 ,-2 ,-2 ,2 ,7 ,-1 ,-3 ,-2 ,-1 ,-4 ,
+	0 ,-3 ,-3 ,-3 ,-1 ,-2 ,-2 ,-3 ,-3 ,3 ,1 ,-2 ,1 ,-1 ,-2 ,-2 ,0 ,-3 ,-1 ,4 ,-3 ,-2 ,-1 ,-4 ,
+	-2 ,-1 ,3 ,4 ,-3 ,0 ,1 ,-1 ,0 ,-3 ,-4 ,0 ,-3 ,-3 ,-2 ,0 ,-1 ,-4 ,-3 ,-3 ,4 ,1 ,-1 ,-4 ,
+	-1 ,0 ,0 ,1 ,-3 ,3 ,4 ,-2 ,0 ,-3 ,-3 ,1 ,-1 ,-3 ,-1 ,0 ,-1 ,-3 ,-2 ,-2 ,1 ,4 ,-1 ,-4 ,
+	0 ,-1 ,-1 ,-1 ,-2 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-2 ,0 ,0 ,-2 ,-1 ,-1 ,-1 ,-1 ,-1 ,-4 ,
+	-4 ,-4 ,-4 ,-4 ,-4 ,-4 ,-4 ,-4 ,-4 ,-4 ,-4 ,-4 ,-4 ,-4 ,-4 ,-4 ,-4 ,-4 ,-4 ,-4 ,-4 ,-4 ,-4 ,1};
+
+
+	alignment_results results_test;
+
+	std::cerr << "Running kernels..." <<  "\n" << std::endl;
+	std::cerr << "o almeno provo a runnarli questi kernels..." <<  "\n" << std::endl;
+	kernel_driver_aa(G_sequencesB, G_sequencesA, &results_test, scores_matrix, -6, -1);
+	std::cerr << "\n" << "DONE" << "\n" << std::endl;
+
+	write_sam_and_stats(G_sequencesA, G_sequencesB, &results_test);
+
+	return 0;
+
+	/*
+	ofstream results_file(out_file);
+
+	for(int k = 0; k < G_sequencesA.size(); k++) {
+		results_file << results_test.top_scores[k] << std::endl;
+	}
+
+	results_file.flush();
+	results_file.close();
+
+	for(int l = 0; l < G_sequencesA.size(); l++) {
+		total_cells += G_sequencesA.at(1).size()*G_sequencesB.at(1).size();
+	}
+
+	std::cerr << "Total Cells:" << total_cells << std::endl;
+
+	return 0;
+	*/
+
 }
 
 int main_fastmap(int argc, char *argv[])

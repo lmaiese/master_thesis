@@ -88,6 +88,44 @@ break;
         SWITCH_SECONDBEST(a,s,h,t,b)\
     break;
 
+#include <vector>
+//#include "adept_alignments.hpp"
+#include <chrono>
+
+#define NUM_OF_AA 21
+#define ENCOD_MAT_SIZE 91
+#define SCORE_MAT_SIZE 576
+
+#define NSTREAMS 2
+
+#define NOW std::chrono::high_resolution_clock::now()
+
+struct alignment_results {
+	short* ref_begin;
+	short* query_begin;
+	short* ref_end;
+	short* query_end;
+	short* top_scores;
+};
+
+#ifndef ALIGNMENTS_HPP
+#define ALIGNMENTS_HPP
+
+class gpu_alignments{
+	public:
+	short* ref_start_gpu;
+	short* ref_end_gpu;
+	short* query_start_gpu;
+	short* query_end_gpu;
+	short* scores_gpu;
+	unsigned* offset_ref_gpu;
+	unsigned* offset_query_gpu;
+
+	gpu_alignments(int max_alignments);
+	~gpu_alignments();
+};
+
+#endif
 
 /* // Deprecated
 void gasal_aln(gasal_gpu_storage_t *gpu_storage, const uint8_t *query_batch, const uint32_t *query_batch_offsets, const uint32_t *query_batch_lens, const uint8_t *target_batch, const uint32_t *target_batch_offsets, const uint32_t *target_batch_lens,   const uint32_t actual_query_batch_bytes, const uint32_t actual_target_batch_bytes, const uint32_t actual_n_alns, int32_t *host_aln_score, int32_t *host_query_batch_start, int32_t *host_target_batch_start, int32_t *host_query_batch_end, int32_t *host_target_batch_end,  algo_type algo, comp_start start, int32_t k_band);
@@ -100,5 +138,23 @@ void gasal_aln_async(gasal_gpu_storage_t *gpu_storage, const uint32_t actual_que
 inline void gasal_kernel_launcher(int32_t N_BLOCKS, int32_t BLOCKDIM, algo_type algo, comp_start start, gasal_gpu_storage_t *gpu_storage, int32_t actual_n_alns, int32_t k_band, int32_t zdrop);
 
 int gasal_is_aln_async_done(gasal_gpu_storage_t *gpu_storage);
+
+//NEW CODE
+
+unsigned getMaxLength (std::vector<std::string> v);
+
+void initialize_alignments(alignment_results *alignments, int max_alignments);
+
+void asynch_mem_copies_htd(gpu_alignments* gpu_data, unsigned* offsetA_h, unsigned* offsetB_h, char* strA, char* strA_d, char* strB, char* strB_d, unsigned half_length_A, unsigned half_length_B, unsigned totalLengthA, unsigned totalLengthB, int sequences_per_stream, int sequences_stream_leftover, cudaStream_t* streams_cuda);
+
+int get_new_min_length(short* alAend, short* alBend, int blocksLaunched);
+
+void asynch_mem_copies_dth_mid(gpu_alignments* gpu_data, short* alAend, short* alBend, int sequences_per_stream, int sequences_stream_leftover, cudaStream_t* streams_cuda);
+
+void asynch_mem_copies_dth(gpu_alignments* gpu_data, short* alAbeg, short* alBbeg, short* top_scores_cpu, int sequences_per_stream, int sequences_stream_leftover, cudaStream_t* streams_cuda);
+
+void kernel_driver_aa(std::vector<std::string> reads, std::vector<std::string> contigs, alignment_results *alignments, short scoring_matrix[], short openGap, short extendGap);
+
+void write_sam_and_stats(std::vector<std::string> refs, std::vector<std::string> quers, alignment_results *results);
 
 #endif

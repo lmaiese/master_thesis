@@ -8,12 +8,12 @@
 
 // Functions for host batches handling. 
 
-host_batch_t *gasal_host_batch_new(uint32_t batch_bytes, uint32_t offset)
+host_batch_t *gasal_host_batch_new(uint32_t host_max_query_batch_bytes, uint32_t offset)
 {
 	cudaError_t err;
 	host_batch_t *res = (host_batch_t *)calloc(1, sizeof(host_batch_t));
-	CHECKCUDAERROR(cudaHostAlloc(&(res->data), batch_bytes*sizeof(uint8_t), cudaHostAllocDefault));
-	res->page_size = batch_bytes;
+	CHECKCUDAERROR(cudaHostAlloc(&(res->data), host_max_query_batch_bytes*sizeof(uint8_t), cudaHostAllocDefault));
+	res->page_size = host_max_query_batch_bytes;
 	res->data_size = 0;
 	res->is_locked = 0;
 	res->offset = offset;

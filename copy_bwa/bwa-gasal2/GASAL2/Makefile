@@ -11,7 +11,27 @@ OBJ_DIR=./obj/
 LIB_DIR=./lib/
 INCLUDE_DIR=./include/
 
-SOURCES=  args_parser.cpp host_batch.cpp ctors.cpp interfaces.cpp res.cpp gasal_align.cu 
+## START NEW CODE
+
+LIBSTATGEN=./libStatGen/include
+
+OBJ_LSG_BAM_PATH=./libStatGen/bam/obj/
+OBJ_LSG_GENERAL_PATH=./libStatGen/general/obj/
+OBJ_LSG_VCF_PATH=./libStatGen/vcf/obj/
+OBJ_LSG_FASTQ_PATH=./libStatGen/fastq/obj/
+OBJ_LSG_GLF_PATH=./libStatGen/glf/obj/
+OBJ_LSG_SAMTOOLS_PATH=./libStatGen/samtools/obj/
+
+BAM_OBJS = $(wildcard $(OBJ_LSG_BAM_PATH)*.o)
+GENERAL_OBJS = $(wildcard $(OBJ_LSG_GENERAL_PATH)*.o)
+VCF_OBJS = $(wildcard $(OBJ_LSG_VCF_PATH)*.o)
+FASTQ_OBJS = $(wildcard $(OBJ_LSG_FASTQ_PATH)*.o)
+GLF_OBJS = $(wildcard $(OBJ_LSG_GLF_PATH)*.o)
+SAMTOOLS_OBJS = $(wildcard $(OBJ_LSG_SAMTOOLS_PATH)*.o)
+
+## END NEW CODE
+
+SOURCES=  args_parser.cpp host_batch.cpp ctors.cpp interfaces.cpp res.cpp gasal_align.cu
 LOBJS=$(patsubst %,%o,$(SOURCES))
 
 LOBJS_PATH=$(addprefix $(OBJ_DIR),$(LOBJS))
@@ -42,11 +62,11 @@ endif
 
 ifeq ($(N_PENALTY),)
 %.cuo: %.cu
-	$(NVCC) -c -g -O3 -std=c++11 -Xcompiler -Wall,-DMAX_SEQ_LEN=$(MAX_SEQ_LEN),-DN_CODE=$(N_CODE) -Xptxas -Werror  --gpu-architecture=$(GPU_COMPUTE_ARCH) --gpu-code=$(GPU_SM_ARCH) -lineinfo --ptxas-options=-v --default-stream per-thread $< -o $(OBJ_DIR)$@
+	$(NVCC) -c -g -O3 -std=c++11 -I $(LIBSTATGEN) -L ./libStatGen -lstatgen -Xcompiler -fopenmp,-Wall,-DMAX_SEQ_LEN=$(MAX_SEQ_LEN),-DN_CODE=$(N_CODE) -Xptxas -Werror  --gpu-architecture=$(GPU_COMPUTE_ARCH) --gpu-code=$(GPU_SM_ARCH) -lineinfo --ptxas-options=-v --default-stream per-thread $< -o $(OBJ_DIR)$@
 	
 else
 %.cuo: %.cu
-	$(NVCC) -c -g -O3 -std=c++11 -Xcompiler -Wall,-DMAX_SEQ_LEN=$(MAX_SEQ_LEN),-DN_CODE=$(N_CODE),-DN_PENALTY=$(N_PENALTY) -Xptxas -Werror  --gpu-architecture=$(GPU_COMPUTE_ARCH) --gpu-code=$(GPU_SM_ARCH) -lineinfo --ptxas-options=-v --default-stream per-thread $< -o $(OBJ_DIR)$@
+	$(NVCC) -c -g -O3 -std=c++11 -I $(LIBSTATGEN) -L ./libStatGen -lstatGen -Xcompiler -fopenmp,-Wall,-DMAX_SEQ_LEN=$(MAX_SEQ_LEN),-DN_CODE=$(N_CODE),-DN_PENALTY=$(N_PENALTY) -Xptxas -Werror  --gpu-architecture=$(GPU_COMPUTE_ARCH) --gpu-code=$(GPU_SM_ARCH) -lineinfo --ptxas-options=-v --default-stream per-thread $< -o $(OBJ_DIR)$@
 	
 endif
 

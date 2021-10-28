@@ -1,15 +1,18 @@
-CXX=g++
-CC=gcc
+CXX=g++ -fPIC
+CC=gcc -fPIC
 VPATH=src:obj:lib
 OBJ_DIR=./obj/
 LIB_DIR=./lib/
-CUDA_LIB_DIR=/usr/local/cuda-10.0/lib64/
-GASAL_LIB_DIR = ./GASAL2/lib/
+CUDA_LIB_DIR=/home/usuaris/lmaiese/cuda-11.0/lib64
+GASAL_LIB_DIR = ./GASAL2/lib/ 
 GASAL_INCLUDE_DIR = ./GASAL2/include/
+#GASAL_LIB_STATE_GEN_DIR = ./GASAL2/src/libStatGen/
+BOOST_INCLUDE_DIR = ../boost_1_75_0
+
 #SHD_DIR=./src/shd_filter/
 #CC=clang --analyze
-CFLAGS=-g -Wall -Wno-unused-function -O2 -msse4.2 -std=c++11 -fpermissive
-NVCCFLAGS = -g -lineinfo --gpu-architecture=compute_35 --gpu-code=sm_35 -O3 -Xcompiler -Wall -Xptxas -Werror --default-stream per-thread 
+CFLAGS=-g -fopenmp -Wall -Wno-unused-function -O2 -msse4.2 -std=c++11 -fpermissive
+NVCCFLAGS = -g -lineinfo --gpu-architecture=compute_35 --gpu-code=sm_35 -O3 -Xcompiler -Wall -Xptxas -Werror --default-stream per-thread -fPIC
 WRAP_MALLOC=-DUSE_MALLOC_WRAPPERS
 AR=ar
 DFLAGS=-DHAVE_PTHREAD $(WRAP_MALLOC)
@@ -29,24 +32,24 @@ AOBJS=bwashm.o bwase.o bwaseqio.o bwtgap.o bwtaln.o bamlite.o \
 	bwtsw2_core.o bwtsw2_main.o bwtsw2_aux.o bwt_lite.o \
 	bwtsw2_chain.o fastmap.o bwtsw2_pair.o
 
-
 AOBJS_PATH=$(addprefix $(OBJ_DIR),$(AOBJS))
 PROG=bwa-gasal2
-INCLUDES= -I$(GASAL_INCLUDE_DIR) 
-LIBS=-lm -lz -lpthread -lcudart
+INCLUDES= -I $(GASAL_INCLUDE_DIR) -I $(BOOST_INCLUDE_DIR) -I ./GASAL2/libStatGen/include/
+#INCLUDES= -I $(GASAL_INCLUDE_DIR) 
+LIBS=-lm -lz -lpthread -lcudart -lStatGen
 SUBDIRS=.
 
 ANALYSIS_FILENAME=125k
 VALGRIND=valgrind
 #--track-origins=yes -tool=memcheck --leak-check=yes --show-reachable=yes --num-callers=20 --track-fds=yes
 NVPROF=
-NVPROF=nvprof --profile-api-trace none -s -f -o /tmp/.nvprof/$(ANALYSIS_FILENAME).nvprof
+NVPROF= /home/usuaris/lmaiese/cuda-11.0/bin/nvprof -s -f -o /home/usuaris/lmaiese/nvprofout/$(ANALYSIS_FILENAME).nvprof
 
 ifeq ($(shell uname -s),Linux)
 	LIBS += -lrt
 endif
 
-#.SUFFIXES:.c .o .cc .cpp .cu
+#.SUFFIXES:.c .o .cc .cpp .cu .hpp
 
 #.c.o:
 #		$(CC) -c $(CFLAGS) $(DFLAGS) $(INCLUDES) $< -o $(OBJ_DIR)$@
@@ -61,7 +64,9 @@ endif
 #.cu.o:
 #		 nvcc -c $(NVCCFLAGS) $(INCLUDES) $< -o $(OBJ_DIR)$(notdir $@)
 
-
+%.o : %.cu
+	nvcc -c $(NVCCFLAGS) $(INCLUDES) $< -o $(OBJ_DIR)$(notdir $@)
+	
 short-index: all 
 		./$(PROG) index /data/work/jlevy/hg19_short/chr01.fasta
 
@@ -94,8 +99,8 @@ srr150nvprof: all
 		./$(PROG) gase_aln -g -t 1 -l 300 -v 4 /data/work/jlevy/hg19.fasta /data/work/jlevy/srr/150/10_1.fastq /data/work/jlevy/srr/150/10_2.fastq > /data/work/jlevy/srr/150/res_bwa-gasal2_master_10.sam
 
 125k: all
-		$(NVPROF) ./$(PROG) gase_aln -g -t 1 -l 153 -v 1 /data/work/jlevy/hg19.fasta /data/work/jlevy/srr/150/125k_1.fastq /data/work/jlevy/srr/150/125k_2.fastq > /data/work/jlevy/srr/150/res_bwa-gasal2_125k.sam
-		sha256sum /data/work/jlevy/srr/150/res_bwa-gasal2_125k.sam
+		$(NVPROF) --cpu-profiling on --profile-from-start on  --unified-memory-profiling off -o $(NVPROF_OUTPUT_DIR)/profile_$(THREAD_NUMBER)t_morebytes.nvprof ./$(PROG) protein_aln -g -t $(THREAD_NUMBER) -l $(READ_LENGTH) -v 1 $(REFERENCE) $(READ1) $(READ2) > $(OUTPUT_SAM)
+		sha256sum $(OUTPUT_SAM) 
 
 
 

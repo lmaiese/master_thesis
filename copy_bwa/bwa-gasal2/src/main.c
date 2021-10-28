@@ -3,7 +3,6 @@
 #include "kstring.h"
 #include "utils.h"
 
-
 #ifndef PACKAGE_VERSION
 #define PACKAGE_VERSION "0.1"
 #endif
@@ -23,6 +22,9 @@ int bwa_bwtsw2(int argc, char *argv[]);
 
 int main_fastmap(int argc, char *argv[]);
 int gase_aln(int argc, char *argv[]);
+
+int protein_aln(int argc, char *argv[]);
+
 int main_shm(int argc, char *argv[]);
 
 int main_pemerge(int argc, char *argv[]);
@@ -106,7 +108,8 @@ int main(int argc, char *argv[])
 	else if (strcmp(argv[1], "shm") == 0) ret = main_shm(argc-1, argv+1);
 	else if (strcmp(argv[1], "pemerge") == 0) ret = main_pemerge(argc-1, argv+1);
 	else if (strcmp(argv[1], "maxk") == 0) ret = main_maxk(argc-1, argv+1);*/
-	else if (strcmp(argv[1], "gase_aln") == 0) ret = gase_aln(argc-1, argv+1);
+	else if (strcmp(argv[1], "gase_aln") == 0){ fprintf(stderr, "Gase_aln.....\n");ret = gase_aln(argc-1, argv+1);}
+	else if (strcmp(argv[1], "protein_aln") == 0){ fprintf(stderr, "Protein_aln.....\n");ret = protein_aln(argc-1, argv+1);}
 	else {
 		fprintf(stderr, "[main] unrecognized command '%s'\n", argv[1]);
 		return 1;

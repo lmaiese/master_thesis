@@ -5,8 +5,8 @@
 #include <math.h>
 #include "utils.h"
 #include "../GASAL2/include/gasal.h"
-
- 
+#include "/home/usuaris/lmaiese/cuda-11.0//targets/x86_64-linux/include/cuda_runtime.h"
+#include <iostream>
 // J.L. 2019-01-10 09:50 adding extern C proto
 #ifdef __cplusplus
 extern "C"{
@@ -28,6 +28,7 @@ typedef struct {
 	long orig_read_batch_size;
 	long curr_read_batch_size;
 	long n_done;
+        int thread_n;
 } ktf_worker_t;
 
 typedef struct kt_for_t {
@@ -142,7 +143,11 @@ static void *ktf_worker(void *data)
 {
    extern void worker1(void *data, int i, int tid, int batch_size, int total_reads, gasal_gpu_storage_v *gpu_storage_vec);
    ktf_worker_t *w = (ktf_worker_t*)data;
+   int thread_n = w->thread_n;
    int i;
+   int devices;
+   cudaGetDeviceCount(&devices);
+   cudaSetDevice(thread_n % devices);
    extern double *load_balance_waste_time;
 //   gasal_gpu_storage gpu_storage;
 //   gpu_storage.max_batch1_bytes = READ_BATCH_SIZE*40*300;
@@ -233,6 +238,7 @@ static void *ktf_worker(void *data)
 void kt_for(int n_threads, void (*func)(void*,int, int, int, int), void *data, long n)
 {
    extern void worker1(void *data, int i, int tid, int batch_size, int total_reads, gasal_gpu_storage_v *gpu_storage_vec);
+        std::cerr << "KT_FOR" << std::endl;
 	int i;
 	kt_for_t t;
 	pthread_t *tid;
@@ -246,6 +252,7 @@ void kt_for(int n_threads, void (*func)(void*,int, int, int, int), void *data, l
 		t.w[i].t = &t, t.w[i].i = (func == &worker1) ? i*t.w[i].n_per_thread : i;//i*READ_BATCH_SIZE : i;
 		t.w[i].n_done = 0;
 		t.w[i].orig_read_batch_size = 5000;
+                t.w[i].thread_n = i;
 
 	}
 	//fprintf(stderr, "n_per_thread=%d\n", t.w[0].n_per_thread);
@@ -265,6 +272,7 @@ typedef struct {
 	int64_t index;
 	int step;
 	void *data;
+        int thread_n;
 } ktp_worker_t;
 
 typedef struct ktp_t {
@@ -279,7 +287,13 @@ typedef struct ktp_t {
 
 static void *ktp_worker(void *data)
 {
-	ktp_worker_t *w = (ktp_worker_t*)data;
+        //std::cout << std::this_thread::get_id();
+	//std::cout << "I'm here.....";
+        std::cerr << "KTP WORKER" << std::endl;
+        int devices;
+        cudaGetDeviceCount(&devices);
+        ktp_worker_t *w = (ktp_worker_t*)data;
+        cudaSetDevice(w->thread_n % devices);
 	ktp_t *p = w->pl;
 	while (w->step < p->n_steps) {
 		// test whether we can kick off the job with this worker
@@ -312,6 +326,7 @@ static void *ktp_worker(void *data)
 
 void kt_pipeline(int n_threads, void *(*func)(void*, int, void*), void *shared_data, int n_steps)
 {
+        std::cerr << "KT_PIPELINE" << std::endl;
 	ktp_t aux;
 	pthread_t *tid;
 	int i;
@@ -333,7 +348,10 @@ void kt_pipeline(int n_threads, void *(*func)(void*, int, void*), void *shared_d
 	}
 
 	tid = (pthread_t*)alloca(n_threads * sizeof(pthread_t));
-	for (i = 0; i < n_threads; ++i) pthread_create(&tid[i], 0, ktp_worker, &aux.workers[i]);
+	for (i = 0; i < n_threads; ++i){
+              aux.workers[i].thread_n = i;
+              pthread_create(&tid[i], 0, ktp_worker, &aux.workers[i]);
+        }
 	for (i = 0; i < n_threads; ++i) pthread_join(tid[i], 0);
 
 	pthread_mutex_destroy(&aux.mutex);
