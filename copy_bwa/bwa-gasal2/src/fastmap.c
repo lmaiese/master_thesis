@@ -511,11 +511,11 @@ void protein_aln(int argc, char *argv[]) {
 	std::cerr << "out_file = " << out_file << "\n" << std::endl;
 
 	long long int total_cells = 0;
-	vector<std::string> G_sequencesA, G_sequencesB;
+	std::vector<std::string> G_sequencesA, G_sequencesB;
 	std::string myInLine;
 	int largestA = 0, largestB = 0, totSizeA = 0, totSizeB = 0;
 
-	ifstream ref_file(refFile), quer_file(queFile);
+	std::ifstream ref_file(refFile), quer_file(queFile);
 
 	if(ref_file.is_open()) {
 		while(getline(ref_file, myInLine)) {
