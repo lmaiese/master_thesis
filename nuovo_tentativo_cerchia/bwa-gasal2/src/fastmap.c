@@ -580,9 +580,9 @@ void protein_aln(int argc, char *argv[]) {
 	std::cerr << "Running kernels..." <<  "\n" << std::endl;
 	kernel_driver_aa(G_sequencesB, G_sequencesA, &results_test, scores_matrix, -6, -1);
 	std::cerr << "\n" << "DONE" << "\n" << std::endl;
-
+	/*
 	write_sam_and_stats(G_sequencesA, G_sequencesB, &results_test);
-
+	*/
 	return 0;
 
 	/*
