@@ -44,7 +44,6 @@ gpu_bsw_driver::kernel_driver_dna(std::vector<std::string> reads, std::vector<st
         cudaStreamCreate(&streams_cuda[stm]);
       }
 
-        std::cout<<"Ma forse magari debuggiamo qui:"<<"\n";
 
         int BLOCKS_l = alignmentsPerDevice;
         if(my_cpu_id == deviceCount - 1)
@@ -233,8 +232,6 @@ gpu_bsw_driver::kernel_driver_dna(std::vector<std::string> reads, std::vector<st
 void
 gpu_bsw_driver::kernel_driver_aa(std::vector<std::string> reads, std::vector<std::string> contigs, gpu_bsw_driver::alignment_results *alignments, short scoring_matrix[], short openGap, short extendGap)
 {
-    std::cout<<"Proviamo a fare un debuggino ma nell'altro file:"<<"\n";
-
     unsigned maxContigSize = getMaxLength(contigs);
     unsigned maxReadSize = getMaxLength(reads);
     unsigned totalAlignments = contigs.size(); // assuming that read and contig vectors are same length
@@ -312,8 +309,7 @@ gpu_bsw_driver::kernel_driver_aa(std::vector<std::string> reads, std::vector<std
       float total_packing = 0;
 
       auto start2 = NOW;
-      std::cout<<"loop beginggggggggggggggggggggg\n";
-      std::cout<<"non mi è chiarooooooooooooooo\n";
+      std::cout<<"loop begin\n";
       for(int perGPUIts = 0; perGPUIts < its; perGPUIts++)
       {
           auto packing_start = NOW;

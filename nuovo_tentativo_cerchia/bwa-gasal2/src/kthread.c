@@ -330,8 +330,8 @@ void kt_pipeline(int n_threads, void *(*func)(void*, int, void*), void *shared_d
 	ktp_t aux;
 	pthread_t *tid;
 	int i;
-        //fprintf(stderr, "PIPELINE\n\n\n\n\n");
-	//fflush(stdout);
+    fprintf(stderr, "PIPELINE\n\n\n\n\n");
+	fflush(stdout);
 
 	if (n_threads < 1) n_threads = 1;
 	aux.n_workers = n_threads;

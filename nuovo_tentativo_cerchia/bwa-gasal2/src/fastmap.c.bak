@@ -501,9 +501,7 @@ void protein_aln(int argc, char *argv[]) {
 	std::cerr << "\n" << "STARTED" << "\n" << std::endl;
 
 	string refFile = argv[8];
-
 	string queFile = argv[9];
-
 	string out_file = "protein_alignment.sam";
 
 	std::cerr << "\n" << "refFile = " << refFile << "\n" << std::endl;
@@ -580,7 +578,6 @@ void protein_aln(int argc, char *argv[]) {
 	alignment_results results_test;
 
 	std::cerr << "Running kernels..." <<  "\n" << std::endl;
-	std::cerr << "o almeno provo a runnarli questi kernels..." <<  "\n" << std::endl;
 	kernel_driver_aa(G_sequencesB, G_sequencesA, &results_test, scores_matrix, -6, -1);
 	std::cerr << "\n" << "DONE" << "\n" << std::endl;
 	/*

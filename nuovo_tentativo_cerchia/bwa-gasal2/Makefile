@@ -1,5 +1,5 @@
-CXX=g++
-CC=gcc
+CXX=g++ -fPIC
+CC=gcc -fPIC
 VPATH=src:obj:lib
 OBJ_DIR=./obj/
 LIB_DIR=./lib/
@@ -10,8 +10,8 @@ BOOST_INCLUDE_DIR = ../boost_1_75_0
 
 #SHD_DIR=./src/shd_filter/
 #CC=clang --analyze
-CFLAGS=-g -fopenmp -Wall -Wno-unused-function -O2 -msse4.2 -std=c++11 -fpermissive
-NVCCFLAGS = -g -lineinfo --gpu-architecture=compute_35 --gpu-code=sm_35 -O3 -Xcompiler -Wall -Xptxas -Werror --default-stream per-thread 
+CFLAGS=-g -fopenmp -Wall -Wno-unused-function -O2 -msse4.2 -std=c++11 -fpermissive -fPIC
+NVCCFLAGS = -g -lineinfo --gpu-architecture=compute_35 --gpu-code=sm_35 -O3 -Xcompiler -Wall -Xptxas -Werror --default-stream per-thread -fPIC 
 WRAP_MALLOC=-DUSE_MALLOC_WRAPPERS
 AR=ar
 DFLAGS=-DHAVE_PTHREAD $(WRAP_MALLOC)
@@ -42,7 +42,7 @@ ANALYSIS_FILENAME=125k
 VALGRIND=valgrind
 #--track-origins=yes -tool=memcheck --leak-check=yes --show-reachable=yes --num-callers=20 --track-fds=yes
 NVPROF=
-NVPROF= nvprof -s -f -o /home/usuaris/lmaiese/nvprofout/$(ANALYSIS_FILENAME).nvprof
+NVPROF= /home/usuaris/lmaiese/cuda-11.0/bin/nvprof -s -f -o /home/usuaris/lmaiese/nvprofout/$(ANALYSIS_FILENAME).nvprof
 
 ifeq ($(shell uname -s),Linux)
 	LIBS += -lrt
@@ -99,7 +99,7 @@ srr150nvprof: all
 
 125k: all
 		$(NVPROF) --cpu-profiling on --profile-from-start on  --unified-memory-profiling off -o $(NVPROF_OUTPUT_DIR)/profile_$(THREAD_NUMBER)t_morebytes.nvprof ./$(PROG) protein_aln -g -t $(THREAD_NUMBER) -l $(READ_LENGTH) -v 1 $(REFERENCE) $(READ1) $(READ2) > $(OUTPUT_SAM)
-		sha256sum $(OUTPUT_SAM)
+		sha256sum $(OUTPUT_SAM) 
 
 
 
