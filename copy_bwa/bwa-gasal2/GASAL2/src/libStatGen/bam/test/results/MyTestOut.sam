@@ -1,0 +1,8 @@
+@HD	SO:queryname	VN:3.1
+@PG	ID:newID
+@SQ	SN:newName	LN:111	AS:HG18	SP:species
+@RG	ID:rgID	SM:sm1
+@RG	ID:rgID1	SM:sample1
+@RG	ID:rgID2	SM:sm2
+@CO	My Comment
+@CO	My Comment2
