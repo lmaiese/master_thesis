@@ -62,11 +62,11 @@ endif
 
 ifeq ($(N_PENALTY),)
 %.cuo: %.cu
-	$(NVCC) -c -g -O3 -std=c++14 -I $(LIBSTATGEN) -L ./libStatGen -lstatgen -Xcompiler -fopenmp,-Wall,-DMAX_SEQ_LEN=$(MAX_SEQ_LEN),-DN_CODE=$(N_CODE) -Xptxas -Werror  --gpu-architecture=$(GPU_COMPUTE_ARCH) --gpu-code=$(GPU_SM_ARCH) -lineinfo --ptxas-options=-v --default-stream per-thread $< -o $(OBJ_DIR)$@
+	$(NVCC) -c -g -O3 -std=c++11 -I $(LIBSTATGEN) -L ./libStatGen -lstatgen -Xcompiler -fopenmp,-Wall,-DMAX_SEQ_LEN=$(MAX_SEQ_LEN),-DN_CODE=$(N_CODE) -Xptxas -Werror  --gpu-architecture=$(GPU_COMPUTE_ARCH) --gpu-code=$(GPU_SM_ARCH) -lineinfo --ptxas-options=-v --default-stream per-thread $< -o $(OBJ_DIR)$@
 	
 else
 %.cuo: %.cu
-	$(NVCC) -c -g -O3 -std=c++14 -I $(LIBSTATGEN) -L ./libStatGen -lstatGen -Xcompiler -fopenmp,-Wall,-DMAX_SEQ_LEN=$(MAX_SEQ_LEN),-DN_CODE=$(N_CODE),-DN_PENALTY=$(N_PENALTY) -Xptxas -Werror  --gpu-architecture=$(GPU_COMPUTE_ARCH) --gpu-code=$(GPU_SM_ARCH) -lineinfo --ptxas-options=-v --default-stream per-thread $< -o $(OBJ_DIR)$@
+	$(NVCC) -c -g -O3 -std=c++11 -I $(LIBSTATGEN) -L ./libStatGen -lstatGen -Xcompiler -fopenmp,-Wall,-DMAX_SEQ_LEN=$(MAX_SEQ_LEN),-DN_CODE=$(N_CODE),-DN_PENALTY=$(N_PENALTY) -Xptxas -Werror  --gpu-architecture=$(GPU_COMPUTE_ARCH) --gpu-code=$(GPU_SM_ARCH) -lineinfo --ptxas-options=-v --default-stream per-thread $< -o $(OBJ_DIR)$@
 	
 endif
 
@@ -75,11 +75,11 @@ endif
 ## If your computer ships gcc-5.3.1 (at least for CUDA 8.0), this is the regular line. You might need to add: -fPIC 
 ifeq ($(N_PENALTY),)
 %.cppo: %.cpp
-	$(CC) -c -g -O3 -std=c++14 -Wall -DMAX_SEQ_LEN=$(MAX_SEQ_LEN) -DN_CODE=$(N_CODE) -Werror $< -o $(OBJ_DIR)$@
+	$(CC) -c -g -O3 -std=c++11 -Wall -DMAX_SEQ_LEN=$(MAX_SEQ_LEN) -DN_CODE=$(N_CODE) -Werror $< -o $(OBJ_DIR)$@
 	
 else
 %.cppo: %.cpp
-	$(CC) -c -g -O3 -std=c++14 -Wall -DMAX_SEQ_LEN=$(MAX_SEQ_LEN) -DN_CODE=$(N_CODE) -DN_PENALTY=$(N_PENALTY) -Werror $< -o $(OBJ_DIR)$@
+	$(CC) -c -g -O3 -std=c++11 -Wall -DMAX_SEQ_LEN=$(MAX_SEQ_LEN) -DN_CODE=$(N_CODE) -DN_PENALTY=$(N_PENALTY) -Werror $< -o $(OBJ_DIR)$@
 	
 endif
 
