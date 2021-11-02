@@ -13,9 +13,8 @@
 #include <thrust/host_vector.h>
 #include <thrust/scan.h>
 
-#include "SamFile.h"
-#include "SamFileHeader.h"
-
+#include "libStatGen/include/SamFile.h"
+#include "libStatGen/include/SamFileHeader.h"
 
 inline void gasal_kernel_launcher(int32_t N_BLOCKS, int32_t BLOCKDIM, algo_type algo, comp_start start, gasal_gpu_storage_t *gpu_storage, int32_t actual_n_alns, int32_t k_band, data_source semiglobal_skipping_head, data_source semiglobal_skipping_tail, Bool secondBest) 
 {
