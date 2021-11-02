@@ -24,20 +24,7 @@
     - B is for computing the Second Best Score. Its values are on enum FALSE(0)/TRUE(1).
     (sidenote: it's based on an enum instead of a bool in order to generalize its type from its Int value, with Int2Type meta-programming-template)
 */
-/* 
-    //! Note from the bwa-gasal2 coder : I failed to understand it, so I copied it.
-    //! You can say to me...
-    You cheated not only the game, but yourself.
 
-    You didn't grow.
-    You didn't improve.
-    You took a shortcut and gained nothing.
-
-    You experienced a hollow victory.
-    Nothing was risked and nothing was gained.
-
-    It's sad that you don't know the difference.
-*/
 
 typedef struct {
    int32_t h, e;
