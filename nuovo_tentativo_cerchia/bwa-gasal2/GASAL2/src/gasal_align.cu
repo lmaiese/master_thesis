@@ -13,6 +13,7 @@
 #include <thrust/host_vector.h>
 #include <thrust/scan.h>
 
+#include "../libStatGen.a"
 #include "../libStatGen/include/SamFile.h"
 #include "../libStatGen/include/SamFileHeader.h"
 
