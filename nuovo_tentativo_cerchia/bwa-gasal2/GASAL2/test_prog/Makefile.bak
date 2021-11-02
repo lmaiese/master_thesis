@@ -22,7 +22,7 @@ FILES_262K=reads_150.fasta ref_150.fasta
 FILES_SHORT=short_query_batch.fasta short_target_batch.fasta
 
 .cpp.o:
-	g++ -std=c++11 -g -c -O3 -Wall -Werror -fopenmp -I ../include -o test_prog.o test_prog.cpp
+	g++ -std=c++11 -g -c -O3 -Wall -Werror -fopenmp -I ../include  -o test_prog.o test_prog.cpp
 
 all: clean test_prog.out
 
